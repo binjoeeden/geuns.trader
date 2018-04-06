@@ -1,0 +1,64 @@
+<settings>
+  <system>
+    <api_key></api_key>			<!-- api key와 api secret은 절대 유출하지 말것 -->
+    <api_secret></api_secret>
+    <window_title>Geuns Trader v2</window_title>
+	<title_icon>title_icon_geuns.png</title_icon>
+
+    <crcy>EOS</crcy>										<!-- 거래할 코인 목록, 컴마(,)로 구분 -->
+    <db_file_name>bithumb_geun.db</db_file_name>				<!-- DB 파일.. 변경하지 말고 그냥 쓸것 -->
+    <sleep_period>10</sleep_period>								<!-- 모든 코인의 거래를 체크하고 그다음 체크하기를 시작하기까지 쉬는 시간 (단위:초)-->
+    <retry_delay>5</retry_delay>								<!-- 빗썸 서버의 응답이 실패 (ex. Try Again)되면 다시 서버로 요청을 재시도 할 때까지 기다리는 시간 -->
+  </system>
+  <common>
+    <new_slot_gap>0.04</new_slot_gap>							<!-- 새로운 슬롯을 만드는 하락 비율 -->
+    <add_bid_rate>0.2</add_bid_rate>							<!-- 물타기 비율 0.1 == 10% 하락 되면 물타기 -->
+    <adj_add_bid_rt>0</adj_add_bid_rt>
+    <good_ask_rt>0.04</good_ask_rt>								<!-- 익절 조건 0.05 == 5% -->
+    <adj_good_ask_rt>0</adj_good_ask_rt>
+    <slot_krw>10000</slot_krw>									<!-- 슬롯의 시작 구매 금액 -->
+    <first_slot_krw>10000</first_slot_krw>						<!-- 첫번째 슬롯의 시작 구매 금액 -->
+    <min_prc>0</min_prc>
+  </common>
+  
+  <BTC>
+    <min_prc>0</min_prc>
+    <min_amnt_krw>1000</min_amnt_krw>
+  </BTC>
+  <ETH>
+    <min_amnt_krw>1000</min_amnt_krw>
+  </ETH>
+  <DASH>
+    <min_amnt_krw>500</min_amnt_krw>
+  </DASH>
+  <LTC>
+    <min_amnt_krw>100</min_amnt_krw>
+  </LTC>
+  <ETC>
+    <min_amnt_krw>10</min_amnt_krw>
+  </ETC>
+  <XRP>
+    <min_amnt_krw>1</min_amnt_krw>
+  </XRP>
+  <BCH>
+    <min_amnt_krw>100</min_amnt_krw>
+  </BCH>
+  <XMR>
+    <min_amnt_krw>100</min_amnt_krw>
+  </XMR>
+  <ZEC>
+    <min_amnt_krw>500</min_amnt_krw>
+  </ZEC>
+  <QTUM>
+    <min_amnt_krw>10</min_amnt_krw>
+  </QTUM>
+  <BTG>
+    <min_amnt_krw>100</min_amnt_krw>
+  </BTG>
+  <EOS>
+    <min_amnt_krw>10</min_amnt_krw>
+  </EOS>
+  <ICX>
+    <min_amnt_krw>1</min_amnt_krw>
+  </ICX>
+</settings>

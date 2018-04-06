@@ -1,0 +1,8 @@
+CREATE TABLE `slot` ( `bid_order_id` TEXT, `crcy` TEXT, `c_date` INTEGER, `c_time` INTEGER, `num_of_bid` INTEGER, `total_bid_amnt` REAL, `bid_amnt` REAL, `bid_prc` INTEGER, `bid_krw` INTEGER, `avr_prc` NUMERIC, `ask_yn` TEXT, `profit_rt` REAL, `profit_krw` INTEGER, `ask_amnt` REAL, `ask_krw` INTEGER, `next_bid_prc` INTEGER, `next_bid_amnt` INTEGER, `next_bid_order_id` TEXT, `ask_order_id` TEXT, `ask_prc` INTEGER )
+
+
+CREATE TABLE `execution` ( `run` TEXT )
+
+CREATE TABLE `crcy_prc` ( `date` INTEGER, `time` INTEGER, `crcy` TEXT, `prc` INTEGER, `bid_prc` INTEGER, `ask_prc` INTEGER )
+
+CREATE TABLE `status` ( `crcy` TEXT, `curr_slot_num` INTEGER, `next_slot_bid_id` TEXT, `total_krw` INTEGER, `total_bid_amnt` REAL, `avr_prc` REAL, `total_earning_ask` INTEGER, PRIMARY KEY(`crcy`) )
