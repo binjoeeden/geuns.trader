@@ -4,7 +4,6 @@ import sys, time, os
 from common_util import *
 from db_handler import *
 from rest_api import *
-import qdarkstyle
 
 main_ui = uic.loadUiType('Main.ui')[0]
 
