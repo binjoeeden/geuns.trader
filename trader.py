@@ -383,7 +383,7 @@ class Main(threading.Thread):
             ccl_order(order_id, crcy, BID)
             print("erase the slot ")
             for s in self.slots[crcy]:
-                if s['bid_order_id'] == order_id:
+                if s['crcy']==crcy and s['bid_order_id'] == order_id:
                     prev_new_slot = s
                     break
 
@@ -405,11 +405,13 @@ class Main(threading.Thread):
                 self.db.req_db('i_slot', db_token)
             elif prev_new_slot is not None:
                 print("update bid of prev. new slot ")
+                token_d = self.get_db_token('d_slot', prev_new_slot)
+                self.db.req_db('d_slot', token_d)
                 prev_new_slot['bid_order_id'] = r['order_id']
                 prev_new_slot['bid_amnt'] = amnt
                 prev_new_slot['bid_prc'] = prc
                 db_token = self.get_db_token('i_slot', prev_new_slot)
-                self.db.req_db('u_slot', db_token)
+                self.db.req_db('i_slot', db_token)
                 slot = prev_new_slot
             else:
                 pass
