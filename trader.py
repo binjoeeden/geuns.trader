@@ -393,7 +393,7 @@ class Main(threading.Thread):
                                      'type':'bid'}, self.retry_delay)
         if slot is None:
             self.status[crcy]['next_slot_bid_id'] = r['order_id']
-            if order_id=='':
+            if order_id=='' or prev_new_slot is None:
                 slot = self.empty_slot.copy()
                 slot['bid_order_id'] = r['order_id']
                 slot['crcy'] = crcy
@@ -482,7 +482,7 @@ class Main(threading.Thread):
         next_slot_bid_prc = ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
         slot = self.update_new_slot_bid(crcy, next_slot_bid_prc)
         if slot is None:
-            print("not bid !!! ask prc : "+str(s['ask_prc'])+", "+int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])))
+            print("not bid !!! ask prc : "+str(s['ask_prc']))
             raise Exception('error')
 
         if s['ask_yn'] == 'Y':
