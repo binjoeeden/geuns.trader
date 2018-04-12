@@ -12,7 +12,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
     lblSTATUS_header = ['', '슬롯 수', '보유수량', '총매수KRW','평가금액',
                         '평단', '현재가격', '수익률', '평가손익(A)',
                         '수익 실현(B)', '총 이윤(A+B)']
-    lblSLOTS_header  = ['', '생성일자','상태', '물타기', '보유수량',
+    lblSLOTS_header  = ['', '생성일자','상태', '물타기', '수량',
                         '총매수KRW', '평가금액', '평가손익(A)',
                         '평단', '현재가격', '수익률', '다음매수가','익절 가격',
                         '수익 실현']
@@ -265,7 +265,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     profit_krw = int(round((curr_prc/e[5]-1)*e[3], 0))
                     row_data.append(format(profit_krw, ','))  # 손익금
                     row_data.append(format(e[6], ','))        # 수익 실현금
-                    row_data.append(e[6]+profit_krw)
+                    row_data.append(format(e[6]+profit_krw, ','))
                 else:
                     row_data.append(0)
                     row_data.append(0)

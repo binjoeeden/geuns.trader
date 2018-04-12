@@ -105,11 +105,11 @@ class XCoinAPI:
 			self.curl_handle.perform();
 			while wait < self.max_wait_cnt:
 				if self.complete_req:
-					sleep(0.2)
+					sleep(0.5)
 					break
 				else:
 					wait+=1
-					sleep(0.02)
+					sleep(0.05)
 			self.curl_handle.close();
 
 			result_str = self.contents

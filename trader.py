@@ -479,7 +479,7 @@ class Main(threading.Thread):
         self.db.req_db('u_slot', db_token)
 
         ## update bid of new slot
-        next_slot_bid_prc = ceil_krw(int(s['bid_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
+        next_slot_bid_prc = ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
         slot = self.update_new_slot_bid(crcy, next_slot_bid_prc)
         if slot is None:
             print("not bid !!! ask prc : "+str(s['ask_prc'])+", "+int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])))
