@@ -292,9 +292,9 @@ class Main(threading.Thread):
             self.status[crcy]['earning_coin_amnt'] += s['ask_amnt']
             self.status[crcy]['earning_coin_krw'] += s['ask_krw']
             # TODO when 별도 매도 시
-                s['profit_krw'] += s['ask_krw']
-                # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
-                s['profit_rt'] = s['profit_krw'] / self.coin_config[crcy]['first_slot_krw']
+            # s['profit_krw'] += s['ask_krw']
+            # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
+            # s['profit_rt'] = s['profit_krw'] / self.coin_config[crcy]['first_slot_krw']
         else:
             s['profit_krw'] += s['ask_krw']
             # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
