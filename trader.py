@@ -71,13 +71,18 @@ class Main(threading.Thread):
         self.sleep_period = self.system['sleep_period']
         self.retry_delay = self.system['retry_delay']
         self.crcy_list = self.coin_config['crcy_list']
+        if self.setting['system']['manual_ask_yn']==1:
+            self.m_ask_yn = True
+        else:
+            self.m_ask_yn = False
         return
 
     def init_status(self):
         self.status = {}
         empty_status={'next_slot_bid_id':'', 'total_krw':0,
                       'total_bid_amnt':0, 'curr_slot_num':0, 'avr_prc':0,
-                      'total_earning_ask' : 0}
+                      'total_earning_ask' : 0, 'earning_coin_amnt':0,
+                      'earning_coin_krw':0}
 
         for crcy in self.crcy_list:
             self.status[crcy] = empty_status.copy()
@@ -104,6 +109,8 @@ class Main(threading.Thread):
                     target['total_bid_amnt'] = e[4]
                     target['avr_prc'] = e[5]
                     target['total_earning_ask'] = e[6]
+                    target['earning_coin_amnt'] = e[7]
+                    target['earning_coin_krw'] = e[8]
                     self.status[crcy] = target
         print("resume status : "+str(self.status))
 
@@ -188,9 +195,12 @@ class Main(threading.Thread):
 
         # get price
         not_prc_crcys = self.crcy_list.copy()
+
+        (curr_date, curr_time) = get_date_time()
         # prcs_ts = {}
         while len(not_prc_crcys)>0:
             for crcy in self.crcy_list:
+                prcs = (curr_date, curr_time, crcy, 0, 0, 0)
                 # get prc
                 r = call_api(GET_PRC, crcy, {}, self.retry_delay)
                 handle_result = self.api_result_to_db(crcy, r)
@@ -227,6 +237,16 @@ class Main(threading.Thread):
                         ## goto update slots of next crcy
                         continue
 
+                if self.m_ask_yn is True and s['ask_yn']=='N' and s['ask_order_id']=='':
+                    print("[M_ASK] chk ask : "+s['ask_order_id']+", prc : "+str(prcs[PRC])+", ask prc:"+s['ask_prc'])
+                    if prcs[PRC]>=s['ask_prc']:
+                        self.update_last_bid_when_ask_condition(s)
+                        db_token = self.get_db_token('u_slot', s)
+                        # update db
+                        self.db.req_db('u_slot', db_token)
+
+
+
                 # check bid order
                 bid_amnt = 0
                 print("chk bid : "+str(s))
@@ -259,6 +279,64 @@ class Main(threading.Thread):
                         break
                 else:
                     is_continue_del = False
+
+    def update_last_bid_when_ask_condition(self, s):
+        s['bid_prc'] = s['ask_prc']
+        s['avr_prc'] = s['bid_prc']
+        s['total_bid_amnt'] -= s['ask_amnt']
+        s['bid_krw'] = s['total_bid_amnt']*s['bid_prc']
+        s['next_bid_prc'] =  ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['add_bid_rate'])), self.coin_config[crcy]['min_amnt_krw'])
+        s['next_bid_amnt'] = ceil(s['bid_krw'] / s['next_bid_prc'], 4)  # necessary ?
+
+        if self.m_ask_yn is True:
+            self.status[crcy]['earning_coin_amnt'] += s['ask_amnt']
+            self.status[crcy]['earning_coin_krw'] += s['ask_krw']
+            # TODO when 별도 매도 시
+                s['profit_krw'] += s['ask_krw']
+                # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
+                s['profit_rt'] = s['profit_krw'] / self.coin_config[crcy]['first_slot_krw']
+        else:
+            s['profit_krw'] += s['ask_krw']
+            # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
+            s['profit_rt'] = s['profit_krw'] / self.coin_config[crcy]['first_slot_krw']
+
+        print(crcy+"] make next bid of current slot : "+str(s))
+        self.make_new_bid(crcy, s['next_bid_prc'], s['next_bid_amnt'], s)
+
+        # ask next one
+        next_ask_prc = s['bid_prc']*(1+self.coin_config[crcy]['good_ask_rt'])+self.coin_config[crcy]['min_amnt_krw']
+        s['ask_prc'] = ceil_krw(next_ask_prc, self.coin_config[crcy]['min_amnt_krw'])
+        ask_krw = s['ask_prc'] * s['total_bid_amnt']
+        profit_krw = ask_krw - s['bid_krw']
+        ask_amnt = ceil(profit_krw / s['ask_prc'], 4)
+        # check minimum amount
+        if self.m_ask_yn is True:
+            min_amnt = 0
+        else:
+            min_amnt = min_units[crcy]
+        if ask_amnt<min_amnt:
+            ask_amnt = min_units[crcy]
+        s['ask_krw']  = ask_amnt * s['ask_prc']
+        s['ask_amnt'] = ask_amnt
+        rgParam =  {'units':s['ask_amnt'], 'price':s['ask_prc'], 'type':'ask'}
+        print(crcy+"] set next good ask order : "+str(rgParam))
+        if self.m_ask_yn is False:
+            ra = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
+            s['ask_order_id'] = ra['order_id']
+
+        ## update bid of new slot
+        next_slot_bid_prc = ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
+        slot = self.update_new_slot_bid(crcy, next_slot_bid_prc)
+        if slot is None:
+            print("not bid !!! ask prc : "+str(s['ask_prc']))
+            raise Exception('error')
+
+        if s['ask_yn'] == 'Y':
+            print("NOT last ask complete condition! ask_yn:Y")
+        else:   # if last slot of this crcy
+            print("Last ask complete condition! ask_yn:N")
+            next_bid_prc =  s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])
+            self.status[crcy]['next_bid_prc'] = next_bid_prc
 
 
     def update_status(self):
@@ -297,7 +375,7 @@ class Main(threading.Thread):
                 self.status[crcy]['avr_prc'] = 0
             db_token = self.get_db_token('iu_status', self.status[crcy])
             self.db.req_db('iu_status', db_token)
-            sleep(0.05)
+            sleep(0.03)
 
     def get_db_token(self, p_type, p):
         token = ()
@@ -321,7 +399,13 @@ class Main(threading.Thread):
         elif p_type=='iu_status':
             token = (p['crcy'], p['curr_slot_num'], p['next_slot_bid_id'],
                      p['total_krw'], p['total_bid_amnt'], p['avr_prc'],
-                     p['total_earning_ask'])
+                     p['total_earning_ask'], p['earning_coin_amnt'],
+                     p['earning_coin_krw'])
+        elif p_type=='u_status_coin':
+            token = (p['curr_slot_num'], p['next_slot_bid_id'],
+                     p['total_krw'], p['total_bid_amnt'], p['avr_prc'],
+                     p['total_earning_ask'], p['earning_coin_amnt'],
+                     p['earning_coin_krw'], p['crcy'])
         return token
 
     # 빗썸으로부터 읽어온 rest api 시세 결과를 self.prcs[crcy]에 저장하고
@@ -431,7 +515,14 @@ class Main(threading.Thread):
         else:
             ccl_order(s['next_bid_order_id'], crcy, BID)
 
-        if s['ask_amnt']!=min_units[crcy] and s['ask_amnt']>s['total_bid_amnt']*0.9:
+        is_last_bid = True
+        if self.m_ask_yn is True:
+            if self.status[crcy]['curr_slot_num']>1:
+                is_last_bid = False
+        else:
+            if s['ask_amnt']!=min_units[crcy] and s['ask_amnt']>s['total_bid_amnt']*0.9:
+                is_last_bid = False
+        if is_last_bid is False:
             s['ask_yn'] = 'Y'
             s['profit_krw'] = s['ask_krw'] - s['bid_krw']
             s['profit_rt'] = s['profit_krw'] / s['bid_krw']
@@ -439,82 +530,43 @@ class Main(threading.Thread):
             # s['next_bid_amnt'] = 0  # necessary ?
             s['ask_order_id'] = ''
             self.status[crcy]['curr_slot_num'] = self.status[crcy]['curr_slot_num']-1
+            if self.status[crcy]['curr_slot_num']==1:
+                # 마지막 slot 매도를 분할 매도로 변경
+                for ss in self.slots[crcy]:
+                    if ss['ask_yn']=='N' and ss['ask_order_id']!='' and ss['ask_amnt']>ss['total_bid_amnt']*0.9:
+                        print("change ask of last slot. cancel amnt,prc:"+str(ss['ask_amnt'])+", "+str(ss['ask_prc']))
+                        if ss['ask_order_id']!='':
+                            ccl_order(ss['ask_order_id'], crcy, ASK)
+
+                        profit_krw = ss['ask_krw']- self.coin_config[crcy]['first_slot_krw']
+                        ss['ask_amnt'] = ceil(profit_krw / ss['ask_prc'], 4)
+
+                        if  self.m_ask_yn is False and ss['ask_amnt']<min_units[crcy]:
+                            ss['ask_amnt'] = min_units[crcy]
+                        if  self.m_ask_yn is False:
+                            print("new ask - amnt,prc:"+str(ss['ask_amnt'])+", "+str(ss['ask_prc']))
+                            rgParam =  {'units':ss['ask_amnt'], 'price':ss['ask_prc'], 'type':'ask'}
+                            rr = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
+                            ss['ask_order_id'] = rr['order_id']
+                        else:
+                            ss['ask_order_id']=''
+                        ss['ask_krw']  = ss['ask_amnt'] * ss['ask_prc']
+                        # update to slot DB
+                        db_token = self.get_db_token('u_slot', ss)
+                        # update db
+                        self.db.req_db('u_slot', db_token)
+                        break
+                else:
+                    print("ERROR : not found last one. need to change last ask order !!!")
         else:
             print("ask is last one")
-            # s['ask_yn'] = 'N'
-            s['bid_prc'] = s['ask_prc']
-            s['avr_prc'] = s['bid_prc']
-            s['total_bid_amnt'] -= s['ask_amnt']
-            s['bid_krw'] = s['total_bid_amnt']*s['bid_prc']
-            s['next_bid_prc'] =  ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['add_bid_rate'])), self.coin_config[crcy]['min_amnt_krw'])
-            s['next_bid_amnt'] = ceil(s['bid_krw'] / s['next_bid_prc'], 4)  # necessary ?
-            s['profit_krw'] += s['ask_krw']
-            # s['profit_rt'] = (s['bid_krw']+s['profit_krw']) / s['bid_krw']
-            s['profit_rt'] = s['profit_krw'] / self.coin_config[crcy]['first_slot_krw']
-
-            print(crcy+"] make next bid of current slot : "+str(s))
-            self.make_new_bid(crcy, s['next_bid_prc'], s['next_bid_amnt'], s)
-
-            # ask next one
-            next_ask_prc = s['bid_prc']*(1+self.coin_config[crcy]['good_ask_rt'])+self.coin_config[crcy]['min_amnt_krw']
-            s['ask_prc'] = ceil_krw(next_ask_prc, self.coin_config[crcy]['min_amnt_krw'])
-            ask_krw = s['ask_prc'] * s['total_bid_amnt']
-            profit_krw = ask_krw - s['bid_krw']
-            ask_amnt = ceil(profit_krw / s['ask_prc'], 4)
-            # check minimum amount
-            if ask_amnt<min_units[crcy]:
-                ask_amnt = min_units[crcy]
-            s['ask_krw']  = ask_amnt * s['ask_prc']
-            s['ask_amnt'] = ask_amnt
-            rgParam =  {'units':s['ask_amnt'], 'price':s['ask_prc'], 'type':'ask'}
-            print(crcy+"] set next good ask order : "+str(rgParam))
-            ra = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
-            s['ask_order_id'] = ra['order_id']
+            self.update_last_bid_when_ask_condition(s)
 
         # update earnings by ask
         # self.status[crcy]['total_earning_ask'] += s['profit_krw']
-
         db_token = self.get_db_token('u_slot', s)
         # update db
         self.db.req_db('u_slot', db_token)
-
-        ## update bid of new slot
-        next_slot_bid_prc = ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
-        slot = self.update_new_slot_bid(crcy, next_slot_bid_prc)
-        if slot is None:
-            print("not bid !!! ask prc : "+str(s['ask_prc']))
-            raise Exception('error')
-
-        if s['ask_yn'] == 'Y':
-            print("NOT last ask complete condition! ask_yn:Y")
-        else:   # if last slot of this crcy
-            print("Last ask complete condition! ask_yn:N")
-            next_bid_prc =  s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])
-            self.status[crcy]['next_bid_prc'] = next_bid_prc
-
-        if self.status[crcy]['curr_slot_num']==1:
-            # 마지막 slot 매도를 분할 매도로 변경
-            for ss in self.slots[crcy]:
-                if ss['ask_yn']=='N' and ss['ask_order_id']!='' and ss['ask_amnt']>ss['total_bid_amnt']*0.9:
-                    print("change ask of last slot. cancel amnt,prc:"+str(ss['ask_amnt'])+", "+str(ss['ask_prc']))
-                    ccl_order(ss['ask_order_id'], crcy, ASK)
-                    profit_krw = ss['ask_krw']-ss['bid_krw']
-                    ss['ask_amnt'] = ceil(profit_krw / ss['ask_prc'], 4)
-                    if ss['ask_amnt']<min_units[crcy]:
-                        ss['ask_amnt'] = min_units[crcy]
-                    rgParam =  {'units':ss['ask_amnt'], 'price':ss['ask_prc'], 'type':'ask'}
-                    print("new ask - amnt,prc:"+str(ss['ask_amnt'])+", "+str(ss['ask_prc']))
-                    rr = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
-                    ss['ask_order_id'] = rr['order_id']
-                    ss['ask_krw']  = ss['ask_amnt'] * ss['ask_prc']
-                    # update to slot DB
-                    db_token = self.get_db_token('u_slot', ss)
-                    # update db
-                    self.db.req_db('u_slot', db_token)
-                    break
-            else:
-                print("ERROR : not found last one. need to change last ask order !!!")
-
 
     def handle_bid_completed(self, s, r, bid_prc):
         print('bid complete. 가격:'+str(bid_prc)+", 주문수량:"+str(s['bid_amnt'])+', 체결수량:'+str(r['amnt'])+', 체결금액:'+str(r['krw'])+', 수수료 수량:'+str(r['fee']))
@@ -523,6 +575,7 @@ class Main(threading.Thread):
         if s['num_of_bid']==0:
             s['c_date'] = r['date']
             s['c_time'] = r['time']
+            s['ask_order_id'] = ''
             print("first bid date : "+str(r['date'])+", time : "+str(r['time']))
             self.status[crcy]['curr_slot_num'] = self.status[crcy]['curr_slot_num']+1
             self.status[crcy]['next_slot_bid_id'] = ''
@@ -556,7 +609,10 @@ class Main(threading.Thread):
         # request good ask order
         if self.status[crcy]['curr_slot_num']==1:
             # 일부만 익절: update s[update ask_amnt], s[ask_krw]
-            min_amnt = min_units[crcy]
+            if self.m_ask_yn is True:
+                min_amnt = 0
+            else:
+                min_amnt = min_units[crcy]
             ask_krw = s['ask_prc'] * s['ask_amnt']
             profit_krw = ask_krw - s['bid_krw']
             ask_amnt = ceil(profit_krw / s['ask_prc'], 4)
@@ -565,10 +621,20 @@ class Main(threading.Thread):
                 ask_amnt = min_amnt
             s['ask_krw']  = ask_amnt * ask_prc
             s['ask_amnt'] = ask_amnt
-        rgParam =  {'units':s['ask_amnt'], 'price':s['ask_prc'], 'type':'ask'}
-        print(crcy+"] set next good ask order : "+str(rgParam))
-        ra = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
-        s['ask_order_id'] = ra['order_id']
+
+        # if self.status[crcy]['curr_slot_num']==1 and self.m_ask_yn is True:
+        #     self.status[crcy]['earning_coin_amnt'] += s['ask_amnt']
+        #     self.status[crcy]['earning_coin_krw'] += s['ask_krw']
+        #     s['total_bid_amnt'] -= s['ask_amnt']
+        #     s['bid_krw'] = s['total_bid_amnt']*s['bid_prc']
+        if self.m_ask_yn is False or self.status[crcy]['curr_slot_num']>1:
+            rgParam =  {'units':s['ask_amnt'], 'price':s['ask_prc'], 'type':'ask'}
+            print(crcy+"] set next good ask order : "+str(rgParam))
+            ra = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
+            s['ask_order_id'] = ra['order_id']
+        else:
+            print("@@@ NOT make ask : "+str(self.m_ask_yn)+", slot num:"+str(self.status[crcy]['curr_slot_num']))
+            print(" @@ ask_order_id : "+s['ask_order_id'])
 
         # update next bid order
         print("make new bid of this slot (prc, amnt) : "+str(s['next_bid_prc'])+", "+str(s['next_bid_amnt']))

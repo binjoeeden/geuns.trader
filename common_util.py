@@ -8,6 +8,10 @@ PRC  = 3
 BID_PRC = 4
 ASK_PRC = 5
 
+# constant 2. index of earning coin info
+EARN_COIN_AMNT = 13
+EARN_COIN_AVR_KRW = 14
+EARN_COIN_CURR_KRW = 15
 
 def cout(*args):
     global event_type
@@ -83,3 +87,6 @@ def get_ts(e):
     ss = MMss-MM*100
     c_time = str(hh)+":"+str(MM)+":"+str(ss)
     return c_date+" "+c_time
+
+def get_num_from_str(str_num):
+    return float(str_num.strip().replace(',',''))

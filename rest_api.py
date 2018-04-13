@@ -33,9 +33,10 @@ settings = getSettings()
 retry_delay = settings['system']['retry_delay']
 print("default retry sleep time : "+str(retry_delay))
 
-min_units = {"BTC": 0.001, "ETH": 0.001, "DASH": 0.001, "LTC": 0.01,
+min_units = {"BTC": 0.001, "ETH": 0.01, "DASH": 0.01, "LTC": 0.01,
         "ETC": 0.1, "XRP": 10, "BCH": 0.001, "XMR": 0.01, "ZEC": 0.01,
-        "QTUM": 0.1, "BTG": 0.01, "EOS": 1, "ICX":1}
+        "QTUM": 0.1, "BTG": 0.1, "EOS": 1, "ICX":1, "VEN":1, "TRX":100,
+        "ELF":10, "MITH":10}
 
 def get_initParam():
     ret = {"payment_currency" : "KRW"}

@@ -35,8 +35,14 @@ class DB_Handler:
         elif query_type=="iu_status":
             sql = ''' INSERT OR REPLACE INTO
                       status(crcy, curr_slot_num, next_slot_bid_id, total_krw,
-                             total_bid_amnt,  avr_prc, total_earning_ask)
-                      VALUES (?, ?, ?, ?, ?, ?, ?) '''
+                             total_bid_amnt,  avr_prc, total_earning_ask,
+                             earning_coin_amnt, earning_coin_krw)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) '''
+        elif query_type=='u_status_coin':
+            sql = ''' UPDATE status SET total_earning_ask=?, earning_coin_amnt=?,
+                                        earning_coin_krw=?
+                      WHERE crcy = ?
+                  '''
         elif query_type=='s_status':
             sql = ''' SELECT * FROM  status
                         WHERE crcy = ?  '''
@@ -68,6 +74,8 @@ class DB_Handler:
             sql = "SELECT * FROM slot where ask_yn=? order by crcy"
         elif query_type=='s_slot_w':
             sql = "SELECT * FROM slot where num_of_bid=0 order by crcy"
+        elif query_type=='s_slot_nw':
+            sql = "SELECT * FROM slot where num_of_bid>0 order by crcy"
         elif query_type=='i_order_hist':
             sql = ''' INSERT INTO order_hist('order_id', 'slot_id', 'crcy',
                                              'cont_date', 'cont_time', 'bidask',
