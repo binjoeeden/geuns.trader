@@ -421,6 +421,11 @@ class Main(threading.Thread):
         return (self.db.req_db('i_prc', self.prcs[crcy]))
 
     def make_new_slot_bid(self, crcy, prc):
+        max_slot_num = self.coin_config[crcy]['max_slot_num']
+        if max_slot_num>0 and self.status[crcy]['curr_slot_num']>=max_slot_num:
+            self.status[crcy]['next_slot_bid_id'] = ''
+            return
+
         if len(self.slots[crcy])==0:
             bid_krw = self.coin_config[crcy]['first_slot_krw']
         else:
@@ -462,6 +467,12 @@ class Main(threading.Thread):
         # cancel previous bid of new slot
         order_id = self.status[crcy]['next_slot_bid_id']
         prev_new_slot = None
+        if slot is None:
+            max_slot_num = self.coin_config[crcy]['max_slot_num']
+            if max_slot_num>0 and self.status[crcy]['curr_slot_num']>=max_slot_num:
+                self.status[crcy]['next_slot_bid_id'] = ''
+                return
+
         if slot is None and order_id!='':
             print(crcy+"] cancel order to delete bid of new slot ")
             ccl_order(order_id, crcy, BID)
