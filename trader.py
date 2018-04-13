@@ -238,7 +238,7 @@ class Main(threading.Thread):
                         continue
 
                 if self.m_ask_yn is True and s['ask_yn']=='N' and s['ask_order_id']=='':
-                    print("[M_ASK] chk ask : "+s['ask_order_id']+", prc : "+str(prcs[PRC])+", ask prc:"+s['ask_prc'])
+                    print("[M_ASK] chk ask : "+s['ask_order_id']+", prc : "+str(prcs[PRC])+", ask prc:"+str(s['ask_prc']))
                     if prcs[PRC]>=s['ask_prc']:
                         self.update_last_bid_when_ask_condition(s)
                         db_token = self.get_db_token('u_slot', s)
