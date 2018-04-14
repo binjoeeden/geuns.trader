@@ -237,7 +237,7 @@ class Main(threading.Thread):
                         ## goto update slots of next crcy
                         continue
 
-                if self.m_ask_yn is True and s['ask_yn']=='N' and s['ask_order_id']=='':
+                if self.m_ask_yn is True and s['ask_yn']=='N' and s['ask_order_id']==''and s['num_of_bid']==1:
                     print("[M_ASK] chk ask : "+s['ask_order_id']+", prc : "+str(prcs[PRC])+", ask prc:"+str(s['ask_prc']))
                     if prcs[PRC]>=s['ask_prc']:
                         self.update_last_bid_when_ask_condition(s)
@@ -281,6 +281,7 @@ class Main(threading.Thread):
                     is_continue_del = False
 
     def update_last_bid_when_ask_condition(self, s):
+        crcy = s['crcy']
         s['bid_prc'] = s['ask_prc']
         s['avr_prc'] = s['bid_prc']
         s['total_bid_amnt'] -= s['ask_amnt']
