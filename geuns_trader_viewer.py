@@ -41,8 +41,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblOption.setText('코인\n수익')
             Main.lblSTATUS_header.append('코인수익')
             # Main.lblSLOTS_header.append("코인수익")
+            self.btnManualAsk.setEnabled(True)
+            self.txtManualAsk.setEnabled(True)
         else:
             self.m_ask_yn = False
+            self.btnManualAsk.setEnabled(False)
+            self.txtManualAsk.setEnabled(False)
             self.lblOption.setText('자본\n잠식')
 
         self.tblStatus.setColumnCount(len(Main.lblSTATUS_header))
@@ -277,7 +281,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 total_bid_amnt = e[5]
                 avr_prc = e[9]
                 bid_krw = int(avr_prc * e[5])
-                print(crcy+"] avr:"+str(avr_prc)+", amnt:"+str(e[5])+":"+str(bid_krw))
+                # print(crcy+"] avr:"+str(avr_prc)+", amnt:"+str(e[5])+":"+str(bid_krw))
                 if e[4]==0:
                     if cmb==1:
                         continue
@@ -376,8 +380,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 current_bid_krw = int(e[4]*e[5])
                 bid_krw = self.coin_config[crcy]['first_slot_krw'] \
                           + self.coin_config[crcy]['slot_krw']*(e[1]-1)
+                # print("curr bid krw : "+str(current_bid_krw+self.coin_config[crcy]['min_amnt_krw'])+", base bid :"+str(bid_krw))
                 if bid_krw>current_bid_krw+self.coin_config[crcy]['min_amnt_krw']:
                     minus = current_bid_krw-bid_krw
+                    # print("minus : "+str(minus))
                     total_minus += minus
                 row_data.append(format(current_bid_krw, ','))      # 총 투자금(total krw)
                 row_data.append(format(int(round(e[4]*curr_prc, 0)), ','))

@@ -639,7 +639,8 @@ class Main(threading.Thread):
         #     self.status[crcy]['earning_coin_krw'] += s['ask_krw']
         #     s['total_bid_amnt'] -= s['ask_amnt']
         #     s['bid_krw'] = s['total_bid_amnt']*s['bid_prc']
-        if self.m_ask_yn is False or self.status[crcy]['curr_slot_num']>1:
+        if self.m_ask_yn is False or self.status[crcy]['curr_slot_num']>1 \
+           or s['ask_amnt']>min_units[crcy]:
             rgParam =  {'units':s['ask_amnt'], 'price':s['ask_prc'], 'type':'ask'}
             print(crcy+"] set next good ask order : "+str(rgParam))
             ra = call_api(REQ_ORD, crcy, rgParam, self.retry_delay)
