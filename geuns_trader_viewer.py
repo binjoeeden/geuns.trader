@@ -1,5 +1,6 @@
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import *
 import sys, time, os
 from common_util import *
 from db_handler import *
@@ -9,14 +10,6 @@ main_ui = uic.loadUiType('Main.ui')[0]
 
 
 class Main(QtWidgets.QMainWindow, main_ui):
-    lblSTATUS_header = ['', '슬롯 수', '보유수량', '총매수KRW','평가금액',
-                        '평단', '현재가격', '수익률', '평가손익',
-                        '매도수익', '실현수익', '총 이윤']
-    lblSLOTS_header  = ['', '생성일자','상태', '물타기', '수량',
-                        '총매수KRW', '평가금액', '평가손익(A)',
-                        '평단', '현재가격', '수익률', '다음매수가','익절 가격',
-                        '매도수익']
-
     idxSTATUS_CRCY          = 0
     idxSTATUS_NumSlot       = 1
     idxSTATUS_TotalKrw      = 2
@@ -35,25 +28,37 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.setting = getSettings()
         self.coin_config = getCoinConfig()
         self.status={}
+        self.lblSLOTS_header  = ['', '생성일자','상태', '물타기', '수량',
+                            '매수금액', '평가금액', '평가손익(A)',
+                            '평균단가', '현재가격', '수익률', '다음매수가','익절 가격',
+                            '매도수익']
+
 
         if self.setting['system']['manual_ask_yn']==1:
             self.m_ask_yn = True
             self.lblOption.setText('코인\n수익')
-            Main.lblSTATUS_header.append('코인수익')
-            # Main.lblSLOTS_header.append("코인수익")
+            # self.lblSLOTS_header.append("코인수익")
             self.btnManualAsk.setEnabled(True)
             self.txtManualAsk.setEnabled(True)
+            self.lblSTATUS_header = ['', '슬롯#', '보유수량', '총매수금액',
+                                     '평가금액', '평균단가', '현재가격', '수익률',
+                                     '평가손익', '매도수익', '실현수익', '총 이윤',
+                                     '코인수익']
         else:
             self.m_ask_yn = False
             self.btnManualAsk.setEnabled(False)
             self.txtManualAsk.setEnabled(False)
             self.lblOption.setText('자본\n잠식')
+            self.lblSTATUS_header = ['', '슬롯#', '보유수량', '총매수금액',
+                                     '평가금액', '평균단가', '현재가격', '수익률',
+                                     '평가손익', '매도수익', '자본잠식',
+                                     '실현수익', '총 이윤']
 
-        self.tblStatus.setColumnCount(len(Main.lblSTATUS_header))
-        self.tblStatus.setHorizontalHeaderLabels(Main.lblSTATUS_header)
+        self.tblStatus.setColumnCount(len(self.lblSTATUS_header))
+        self.tblStatus.setHorizontalHeaderLabels(self.lblSTATUS_header)
         self.tblStatus.resizeColumnsToContents()
-        self.tblSlots.setColumnCount(len(Main.lblSLOTS_header))
-        self.tblSlots.setHorizontalHeaderLabels(Main.lblSLOTS_header)
+        self.tblSlots.setColumnCount(len(self.lblSLOTS_header))
+        self.tblSlots.setHorizontalHeaderLabels(self.lblSLOTS_header)
         self.tblSlots.resizeColumnsToContents()
         self.cmbSellCrcy.clear()
 
@@ -100,10 +105,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
     def updateExecState(self):
         if self.get_exec_state() is True:
-            self.btnExecTrading.setText(Main.lblBtnExec[1])
+            self.btnExecTrading.setText(self.lblBtnExec[1])
             self.lblExecStatus.setText('트레이딩 진행 중 ... ')
         else:
-            self.btnExecTrading.setText(Main.lblBtnExec[0])
+            self.btnExecTrading.setText(self.lblBtnExec[0])
             self.lblExecStatus.setText('트레이딩 중단됨 ...')
 
 
@@ -122,13 +127,20 @@ class Main(QtWidgets.QMainWindow, main_ui):
         sleep(1)
         self.updateExecState()
 
-    def setTableData(self, tbl, row, col, txt):
-        tbl.setItem(row, col, QtWidgets.QTableWidgetItem(str(txt)))
+    def setTableData(self, tbl, row, col, cell_value):
+        item = QtWidgets.QTableWidgetItem(str(cell_value))
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+
+        # if type(cell_value) is str:
+        #     item.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        # else:
+        #     item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        tbl.setItem(row, col, item)
+
 
     def setTableRowData(self, tbl, row, row_data):
         for idx_column in range(len(row_data)):
             self.setTableData(tbl, row, idx_column, row_data[idx_column])
-
 
     def toggleCbox(self, isChecked):
         self.inquirySlots()
@@ -202,13 +214,18 @@ class Main(QtWidgets.QMainWindow, main_ui):
             v = int(v)
         self.lblNewSlotGap.setText(str(v)+' %')
 
-        coin_amnt = self.status[crcy][EARN_COIN_AMNT]
-        coin_krw = self.status[crcy][EARN_COIN_AVR_KRW]
+        if self.setting['system']['manual_ask_yn']==1:
+            coin_amnt = self.status[crcy][EARN_COIN_AMNT_M_ASK]
+            coin_krw = self.status[crcy][EARN_COIN_AVR_KRW_M_ASK]
+            curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW_M_ASK]
+        else:
+            coin_amnt = self.status[crcy][EARN_COIN_AMNT]
+            coin_krw = self.status[crcy][EARN_COIN_AVR_KRW]
+            curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW]
         if coin_amnt>0:
             avr_prc = round(coin_krw / coin_amnt, 0)
         else:
             avr_prc=0
-        curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW]
 
         self.lblEarnAmnt.setText('-')
         self.lblEarnPrc.setText('-')
@@ -251,7 +268,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.tblSlots.clear()
             sleep(0.1)
             self.tblSlots.setRowCount(len(r_db))
-            self.tblSlots.setHorizontalHeaderLabels(Main.lblSLOTS_header)
+            self.tblSlots.setHorizontalHeaderLabels(self.lblSLOTS_header)
             crcy = ''
             idx_row = 0
             for e in r_db:
@@ -349,6 +366,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         self.tblSlots.setRowCount(idx_row)
         self.tblSlots.resizeColumnsToContents()
+        self.tblSlots.resizeRowsToContents()
 
     def inquiryStatus(self):
 
@@ -363,12 +381,13 @@ class Main(QtWidgets.QMainWindow, main_ui):
         total_coin_ask = 0
         if r_db is not False:
             self.tblStatus.setRowCount(len(r_db))
-            self.tblStatus.setHorizontalHeaderLabels(Main.lblSTATUS_header)
-
+            self.tblStatus.setHorizontalHeaderLabels(self.lblSTATUS_header)
             idx_row = 0
             for e in r_db:
                 minus = 0
                 crcy = e[0]
+                print("config : "+str(self.coin_config[crcy]))
+
                 r = call_api(GET_PRC, crcy)
                 print(r)
                 self.curr_prc[crcy] = int(r['data']['closing_price'])
@@ -380,8 +399,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 current_bid_krw = int(e[4]*e[5])
                 bid_krw = self.coin_config[crcy]['first_slot_krw'] \
                           + self.coin_config[crcy]['slot_krw']*(e[1]-1)
-                # print("curr bid krw : "+str(current_bid_krw+self.coin_config[crcy]['min_amnt_krw'])+", base bid :"+str(bid_krw))
-                if bid_krw>current_bid_krw+self.coin_config[crcy]['min_amnt_krw']:
+                # print("base bid (98.5%) :"+str(bid_krw)+"("+str(bid_krw*0.985)+"), curr bid krw(98.5%) : "+str(current_bid_krw))
+                if bid_krw*0.985>current_bid_krw:
                     minus = current_bid_krw-bid_krw
                     # print("minus : "+str(minus))
                     total_minus += minus
@@ -396,6 +415,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     profit_krw = int(round((curr_prc/e[5]-1)*e[3], 0))
                     row_data.append(format(profit_krw, ','))  # 평가 손익금
                     row_data.append(format(e[6], ','))        # 매도 수익
+                    if self.m_ask_yn is False:
+                        row_data.append(format(int(round(minus, 0)), ','))       # 자본 잠식
                     benefit_krw = round(e[6]+minus, 0)
                     row_data.append(format(int(benefit_krw), ',')) # 실현 수익 = 매도 수익 - 자본 잠식
                     benefit = benefit_krw+profit_krw
@@ -434,6 +455,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblOptVal.setText(format(int(round(total_minus,0)), ','))       # 자본 잠식
 
         self.tblStatus.resizeColumnsToContents()
+        self.tblStatus.resizeRowsToContents()
         self.inquirySlots()
 
         r = call_api(GET_BAL, 'BTC')
