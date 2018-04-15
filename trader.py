@@ -282,6 +282,7 @@ class Main(threading.Thread):
 
     def update_last_bid_when_ask_condition(self, s):
         crcy = s['crcy']
+        curr_ask_prc = s['ask_prc']
         s['bid_prc'] = s['ask_prc']
         s['avr_prc'] = s['bid_prc']
         s['total_bid_amnt'] -= s['ask_amnt']
@@ -326,7 +327,7 @@ class Main(threading.Thread):
             s['ask_order_id'] = ra['order_id']
 
         ## update bid of new slot
-        next_slot_bid_prc = ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
+        next_slot_bid_prc = ceil_krw(int(curr_ask_prc * (1-self.coin_config[crcy]['new_slot_gap'])), self.coin_config[crcy]['min_amnt_krw'])
         slot = self.update_new_slot_bid(crcy, next_slot_bid_prc)
         if slot is None:
             print("not bid !!! ask prc : "+str(s['ask_prc']))
@@ -473,6 +474,10 @@ class Main(threading.Thread):
             if max_slot_num>0 and self.status[crcy]['curr_slot_num']>=max_slot_num:
                 self.status[crcy]['next_slot_bid_id'] = ''
                 return
+        else:
+            if slot['next_bid_order_id']!='':
+                ccl_order(slot['next_bid_order_id'], crcy, BID)
+                slot['next_bid_order_id']=''
 
         if slot is None and order_id!='':
             print(crcy+"] cancel order to delete bid of new slot ")
