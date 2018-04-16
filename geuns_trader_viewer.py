@@ -78,7 +78,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                       'BCH':self.cboxBch, 'LTC':self.cboxLtc,
                       'EOS':self.cboxEos, 'XMR':self.cboxXmr,
                       'DASH':self.cboxDash, 'ETC':self.cboxEtc,
-                      'QTUM':self.cboxQtum, 'ICON':self.cboxIcon,
+                      'QTUM':self.cboxQtum, 'ICX':self.cboxIcx,
                       'TRX':self.cboxTrx,  'VEN':self.cboxVen,
                       'ELF':self.cboxElf,  'MITH':self.cboxMith}
         self.initAllCombos()
@@ -214,31 +214,34 @@ class Main(QtWidgets.QMainWindow, main_ui):
             v = int(v)
         self.lblNewSlotGap.setText(str(v)+' %')
 
-        if self.setting['system']['manual_ask_yn']==1:
-            coin_amnt = self.status[crcy][EARN_COIN_AMNT_M_ASK]
-            coin_krw = self.status[crcy][EARN_COIN_AVR_KRW_M_ASK]
-            curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW_M_ASK]
-        else:
-            coin_amnt = self.status[crcy][EARN_COIN_AMNT]
-            coin_krw = self.status[crcy][EARN_COIN_AVR_KRW]
-            curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW]
-        if coin_amnt>0:
-            avr_prc = round(coin_krw / coin_amnt, 0)
-        else:
-            avr_prc=0
-
         self.lblEarnAmnt.setText('-')
         self.lblEarnPrc.setText('-')
         self.txtManualAsk.setText('0')
 
-        if coin_amnt>0 and coin_krw>0 and curr_krw>0:
-            self.lblEarnAmnt.setText(format(coin_amnt, ','))
-            self.lblEarnPrc.setText(format(int(avr_prc), ','))
-            self.txtManualAsk.setText(format(coin_krw, ','))
-        if coin_amnt==0:
-            self.lblEarnAmnt.setText('-')
-        if coin_krw==0:
-            self.lblEarnPrc.setText('-')
+        try:
+            if self.setting['system']['manual_ask_yn']==1:
+                coin_amnt = self.status[crcy][EARN_COIN_AMNT_M_ASK]
+                coin_krw = self.status[crcy][EARN_COIN_AVR_KRW_M_ASK]
+                curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW_M_ASK]
+            else:
+                coin_amnt = self.status[crcy][EARN_COIN_AMNT]
+                coin_krw = self.status[crcy][EARN_COIN_AVR_KRW]
+                curr_krw =  self.status[crcy][EARN_COIN_CURR_KRW]
+            if coin_amnt>0:
+                avr_prc = round(coin_krw / coin_amnt, 0)
+            else:
+                avr_prc=0
+            if coin_amnt>0 and coin_krw>0 and curr_krw>0:
+                self.lblEarnAmnt.setText(format(coin_amnt, ','))
+                self.lblEarnPrc.setText(format(int(avr_prc), ','))
+                self.txtManualAsk.setText(format(coin_krw, ','))
+            if coin_amnt==0:
+                self.lblEarnAmnt.setText('-')
+            if coin_krw==0:
+                self.lblEarnPrc.setText('-')
+        except:
+            pass
+
 
 
 
@@ -278,7 +281,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     self.cboxs[crcy].setEnabled(True)
                     if crcy not in sell_crcy_list:
                         sell_crcy_list.append(crcy)
-                    curr_prc = self.curr_prc[crcy]
+
+                    try:
+                        curr_prc = self.curr_prc[crcy]
+                    except:
+                        curr_prc = 0
                 if self.need_cbox_init and self.cboxs[crcy].isChecked() is False:
                     self.cboxs[crcy].toggle()
 

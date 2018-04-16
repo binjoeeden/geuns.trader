@@ -651,7 +651,7 @@
       <string>대시</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="cboxIcon">
+    <widget class="QCheckBox" name="cboxIcx">
      <property name="enabled">
       <bool>false</bool>
      </property>

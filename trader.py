@@ -239,7 +239,7 @@ class Main(threading.Thread):
 
                 if self.m_ask_yn is True and s['ask_yn']=='N' and s['ask_order_id']==''and s['num_of_bid']==1:
                     print("[M_ASK] chk ask : "+s['ask_order_id']+", prc : "+str(prcs[PRC])+", ask prc:"+str(s['ask_prc']))
-                    if prcs[PRC]>=s['ask_prc']:
+                    if self.prcs[crcy]>=s['ask_prc']:
                         self.update_last_bid_when_ask_condition(s)
                         db_token = self.get_db_token('u_slot', s)
                         # update db
@@ -256,7 +256,6 @@ class Main(threading.Thread):
                     bid_amnt = s['bid_amnt']
                     if s['num_of_bid'] !=0 or s['c_date']!=0 or s['c_time']!=0:
                         print("[DEBUG] new slot case. but error :: "+str(s))
-
                 else:
                     print("check second or more bid")
                     bid_order_id = s['next_bid_order_id']
@@ -268,7 +267,7 @@ class Main(threading.Thread):
                     r = chk_order(bid_order_id, crcy, BID, bid_amnt)
                     if r['result'] is True:
                         bid_prc = r['prcs']
-                        print("bid complete!")
+                        print("bid complete!  ")
                         self.handle_bid_completed(s, r, bid_prc)
 
             is_continue_del=True
@@ -282,9 +281,9 @@ class Main(threading.Thread):
 
     def update_last_bid_when_ask_condition(self, s):
         crcy = s['crcy']
-        curr_ask_prc = s['ask_prc']
-        s['bid_prc'] = s['ask_prc']
-        s['avr_prc'] = s['bid_prc']
+        curr_ask_prc = int(s['ask_prc'])
+        s['bid_prc'] = curr_ask_prc
+        s['avr_prc'] = curr_ask_prc
         s['total_bid_amnt'] -= s['ask_amnt']
         s['bid_krw'] = s['total_bid_amnt']*s['bid_prc']
         s['next_bid_prc'] =  ceil_krw(int(s['ask_prc'] * (1-self.coin_config[crcy]['add_bid_rate'])), self.coin_config[crcy]['min_amnt_krw'])
@@ -614,7 +613,8 @@ class Main(threading.Thread):
         s['next_bid_amnt'] = ceil(s['bid_krw'] / s['next_bid_prc'], 4)
         s['ask_amnt'] = ceil(s['total_bid_amnt'], 4)
         ask_prc = s['avr_prc']*(1+self.coin_config[crcy]['good_ask_rt']+adj_good_ask_rt)
-        s['ask_prc'] = ceil_krw(round(ask_prc,0), self.coin_config[crcy]['min_amnt_krw'])
+        min_amnt_krw = self.coin_config[crcy]['min_amnt_krw']
+        s['ask_prc'] = ceil_krw(round(ask_prc,0), min_amnt_krw)
         s['ask_krw'] = s['ask_prc'] * s['ask_amnt']
 
         # cancel prvious ask order
@@ -630,8 +630,7 @@ class Main(threading.Thread):
                 min_amnt = 0
             else:
                 min_amnt = min_units[crcy]
-            ask_krw = s['ask_prc'] * s['ask_amnt']
-            profit_krw = ask_krw - s['bid_krw']
+            profit_krw = s['ask_krw'] - s['bid_krw']
             ask_amnt = ceil(profit_krw / s['ask_prc'], 4)
             # check minimum amount
             if ask_amnt<min_amnt:
