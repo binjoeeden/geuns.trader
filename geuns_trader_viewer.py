@@ -6,7 +6,8 @@ from common_util import *
 from db_handler import *
 from rest_api import *
 
-main_ui = uic.loadUiType('Main.ui')[0]
+settings =  getSettings()
+main_ui = uic.loadUiType(settings['system']['view'])[0]
 
 
 class Main(QtWidgets.QMainWindow, main_ui):
@@ -20,16 +21,16 @@ class Main(QtWidgets.QMainWindow, main_ui):
     idxSTATUS_ProfitKrw     = 7
     idxSTATUS_EarningAsk    = 8
     lblBtnExec = ['트레이딩 시작', '트레이딩 중지']
-
+    global settings
     def __init__(self, parent=None):
         super()
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
-        self.setting = getSettings()
+        self.setting = settings
         self.coin_config = getCoinConfig()
         self.status={}
         self.lblSLOTS_header  = ['', '생성일자','상태', '물타기', '수량',
-                            '매수금액', '평가금액', '평가손익(A)',
+                            '매수금액', '평가금액', '평가손익',
                             '평균단가', '현재가격', '수익률', '다음매수가','익절 가격',
                             '매도수익']
 
@@ -301,7 +302,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 if self.cboxs[crcy].isChecked() is False:
                     continue
                 row_data.append(e[1])
-                ts_str = get_ts((e[2], e[3]))
+                ts_str = get_ts_slot((e[2], e[3]))
                 if ts_str.find('0/0/0')>=0:
                     ts_str = '-'
 
@@ -395,6 +396,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         total_benefit = 0
         total_benefit_krw = 0
         total_coin_ask = 0
+        total_coin_profit_krw = 0
         if r_db is not False:
             self.tblStatus.setRowCount(len(r_db))
             self.tblStatus.setHorizontalHeaderLabels(self.lblSTATUS_header)
@@ -429,6 +431,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     profit_rw = round((curr_prc/e[5]-1)*100, 2)
                     row_data.append(str(profit_rw)+' %') # 수익률
                     profit_krw = int(round((curr_prc/e[5]-1)*e[3], 0))
+                    total_coin_profit_krw +=profit_krw
                     row_data.append(format(profit_krw, ','))  # 평가 손익금
                     row_data.append(format(e[6], ','))        # 매도 수익
                     if self.m_ask_yn is False:
@@ -464,7 +467,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         # 실적 정보
         self.lblBenefit.setText(format(int(total_benefit), ',')) # 평가 수익 = 총 이윤 - 자본잠식
         self.lblBenefitKrw.setText(format(int(total_benefit_krw), ',')) # 실현 수익 = 총 이윤 - 자본잠식
-
+        self.lblCurBenefit.setText(format(total_coin_profit_krw, ',')) # 평가손익
         if self.m_ask_yn is True:
             self.lblOptVal.setText(format(int(round(total_coin_ask,0)), ','))    # 코인 수익
         else:

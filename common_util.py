@@ -76,6 +76,23 @@ def get_date_time(ts=None):
     time = ts.hour*10000+ts.minute*100+ts.second
     return (date, time)
 
+def get_ts_slot(e):
+    if type(e) is not tuple or len(e)!=2:
+        return ''
+    date = e[0]
+    time = e[1]
+    yy = int(date/10000)
+    mmdd = date-yy*10000
+    mm = int(mmdd/100)
+    dd = mmdd-mm*100
+    c_date = str(yy%100)+"/"+str(mm)+"/"+str(dd)
+    hh = int(time/10000)
+    MMss = time-hh*10000
+    MM = int(MMss/100)
+    ss = MMss-MM*100
+    c_time = str(hh)+":"+str(MM)
+    return c_date+" "+c_time
+
 def get_ts(e):
     if type(e) is not tuple or len(e)!=2:
         return ''
