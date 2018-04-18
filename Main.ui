@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1217</width>
-    <height>674</height>
+    <height>673</height>
    </rect>
   </property>
   <property name="font">
@@ -26,9 +26,9 @@
     <property name="geometry">
      <rect>
       <x>385</x>
-      <y>40</y>
+      <y>45</y>
       <width>801</width>
-      <height>175</height>
+      <height>178</height>
      </rect>
     </property>
     <property name="font">
@@ -72,9 +72,9 @@
     <property name="geometry">
      <rect>
       <x>1015</x>
-      <y>6</y>
+      <y>10</y>
       <width>171</width>
-      <height>31</height>
+      <height>28</height>
      </rect>
     </property>
     <property name="font">
@@ -355,9 +355,9 @@
     <property name="geometry">
      <rect>
       <x>384</x>
-      <y>6</y>
+      <y>10</y>
       <width>171</width>
-      <height>31</height>
+      <height>28</height>
      </rect>
     </property>
     <property name="font">
@@ -376,7 +376,7 @@
     <property name="geometry">
      <rect>
       <x>560</x>
-      <y>13</y>
+      <y>19</y>
       <width>181</width>
       <height>21</height>
      </rect>
@@ -976,7 +976,7 @@
     <widget class="QLabel" name="lblOptVal">
      <property name="geometry">
       <rect>
-       <x>44</x>
+       <x>47</x>
        <y>20</y>
        <width>61</width>
        <height>31</height>
@@ -1030,7 +1030,7 @@
     <widget class="QLabel" name="label_7">
      <property name="geometry">
       <rect>
-       <x>233</x>
+       <x>232</x>
        <y>20</y>
        <width>41</width>
        <height>31</height>
@@ -1055,7 +1055,7 @@
     <widget class="QLabel" name="lblBenefitKrw">
      <property name="geometry">
       <rect>
-       <x>157</x>
+       <x>159</x>
        <y>20</y>
        <width>61</width>
        <height>31</height>
@@ -1332,7 +1332,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lblOption_10">
+    <widget class="QLabel" name="lblPm1">
      <property name="geometry">
       <rect>
        <x>839</x>
@@ -1380,7 +1380,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lblOption_12">
+    <widget class="QLabel" name="lblPm2">
      <property name="geometry">
       <rect>
        <x>839</x>
@@ -1749,7 +1749,7 @@
     <property name="geometry">
      <rect>
       <x>390</x>
-      <y>215</y>
+      <y>218</y>
       <width>791</width>
       <height>31</height>
      </rect>

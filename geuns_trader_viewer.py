@@ -200,7 +200,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
         v = round(cfg['adj_add_bid_rt']*100, 1)
         if v == int(v):
             v = int(v)
-        self.lblAdjAddBidRt.setText(str(v)+' %')
+        if v>=0:
+            self.lblPm1.setText("++")
+        else:
+            self.lblPm1.setText("--")
+        self.lblAdjAddBidRt.setText(str(abs(v))+' %')
+
         v = round(cfg['good_ask_rt']*100, 1)
         if v == int(v):
             v = int(v)
@@ -208,7 +213,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
         v = round(cfg['adj_good_ask_rt']*100, 1)
         if v == int(v):
             v = int(v)
-        self.lblAdjGoodAskRt.setText(str(v)+' %')
+        if v>=0:
+            self.lblPm2.setText("++")
+        else:
+            self.lblPm2.setText("--")
+        self.lblAdjGoodAskRt.setText(str(abs(v))+' %')
         v = round(cfg['new_slot_gap']*100, 1)
         if v == int(v):
             v = int(v)
