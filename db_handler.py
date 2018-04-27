@@ -43,27 +43,43 @@ class DB_Handler:
                                         earning_coin_krw=?
                       WHERE crcy = ?
                   '''
+        elif query_type=='s_m_ask':
+            sql = ''' SELECT * FROM manual_ask where crcy=? '''
+        elif query_type=='iu_m_ask':
+            sql = ''' INSERT OR REPLACE INTO
+                      manual_ask(crcy, total_earning_ask, earning_coin_amnt, earning_coin_krw)
+                      VALUES (?, ?, ?, ?)'''
+        elif query_type=='d_m_ask':
+            sql = ''' DELETE FROM manual_ask WHERE crcy=? '''
         elif query_type=='s_status':
             sql = ''' SELECT * FROM  status
                         WHERE crcy = ?  '''
         elif query_type=='s_a_status':
             sql = 'SELECT * FROM  status'
+        elif query_type=='d_status':
+            sql = 'DELETE FROM status'
         elif query_type=='i_slot':
             sql = ''' INSERT INTO slot(bid_order_id, crcy, c_date, c_time,
                                        num_of_bid, total_bid_amnt, bid_amnt, bid_prc, bid_krw,
                                        avr_prc, ask_yn, profit_rt, profit_krw,
                                        ask_amnt, ask_krw, next_bid_prc,
-                                       next_bid_amnt, next_bid_order_id, ask_order_id, ask_prc)
-                      VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+                                       next_bid_amnt, next_bid_order_id,
+                                       ask_order_id, ask_prc, ask_date, ask_time)
+                      VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?,
+                              ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  '''
         elif query_type=='u_slot':
             sql = ''' UPDATE slot SET  c_date=?, c_time=?,
                                        num_of_bid=?, total_bid_amnt=?, bid_amnt=?, bid_prc=?, bid_krw=?,
                                        avr_prc=?, ask_yn=?, profit_rt=?, profit_krw=?,
                                        ask_amnt=?, ask_krw=?, next_bid_prc=?,
-                                       next_bid_amnt=?, next_bid_order_id=?, ask_order_id=?, ask_prc=?
+                                       next_bid_amnt=?, next_bid_order_id=?, ask_order_id=?, ask_prc=?,
+                                       ask_date=?, ask_time=?
                                   WHERE bid_order_id=? and crcy=? '''
         elif query_type=='d_slot':
             sql = ''' DELETE FROM slot WHERE bid_order_id=? and crcy=? '''
+        elif query_type=='d_a_slot':
+            sql = 'DELETE FROM slot'
         elif query_type=='s_slot':
             sql = "SELECT * FROM slot where crcy=? and ask_yn='N' "
         elif query_type=='s_slot_a':
@@ -97,6 +113,37 @@ class DB_Handler:
                                     = (select max(date*1000000+time)
                                         from crcy_prc where crcy=?)
                 """
+        elif query_type=='s_prcs_g':
+            sql = ''' SELECT date*1000000+time, prc
+                      FROM crcy_prc as c,
+                           (select min(date) as min_date from crcy_prc) as b,
+                           (select min(c_date*1000000+c_time) as min_ts
+                                   from slot where crcy=? and c_date>0)
+                      WHERE crcy=? and (c.date*1000000+c.time)>=min_ts
+                  '''
+        elif query_type=='s_prc_gb':
+            sql = ''' SELECT min(prc), max(prc), min_ts
+                        FROM crcy_prc as c,
+                             (select min(c_date*1000000+c_time) as min_ts
+                                 from slot where crcy=? and c_date>0)
+                      WHERE crcy=? and (c.date*1000000+c.time)>=min_ts
+                  '''
+        elif query_type=='s_prc_o':
+            sql = ''' SELECT c_date*1000000+c_time, bid_prc
+                      FROM slot
+                      WHERE crcy=? and ask_yn='Y'
+            '''
+        elif query_type=='i_order_h':
+            sql = ''' INSERT INTO order_hist(crcy, b_date, b_time, bid_prc,
+                                             a_date, a_time, ask_prc)
+                      VALUES(?, ?, ?, ?, ?, ?, ?)
+                  '''
+        elif query_type=='s_order_h':
+            sql = ''' SELECT b_date*1000000+b_time as b_ts, bid_prc,
+                             a_date*1000000+a_time as a_ts, ask_prc
+                       FROM order_hist
+                      WHERE crcy=?
+                  '''
         else:
             # print("ERROR:BO0003 "+table_name)
             return False

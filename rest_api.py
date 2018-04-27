@@ -36,7 +36,7 @@ print("default retry sleep time : "+str(retry_delay))
 min_units = {"BTC": 0.001, "ETH": 0.01, "DASH": 0.01, "LTC": 0.01,
         "ETC": 0.1, "XRP": 10, "BCH": 0.001, "XMR": 0.01, "ZEC": 0.01,
         "QTUM": 0.1, "BTG": 0.1, "EOS": 1, "ICX":1, "VEN":1, "TRX":100,
-        "ELF":10, "MITH":10}
+        "ELF":10, "MITH":10, "MCO":1, "OMG":0.1, "KNC":1}
 
 def get_initParam():
     ret = {"payment_currency" : "KRW"}
@@ -70,6 +70,8 @@ def call_api(api_type, crcy, rgParam={}, t_sleep=retry_delay):
             if api_type==CCL_ORD:
                 if 'message' in result.keys():
                     if result['message'].find('진행중이 아닙니다.')>0:
+                        break
+                    if result['message'].find('사용가능')>0 and result['message'].find('초과')>0:
                         break
             print("call_api failed! "+STR_API_TYPE[api_type]+", param:"+str(rgParam))
             print(" result:"+str(result)+"\n - sleep : "+str(t_sleep))

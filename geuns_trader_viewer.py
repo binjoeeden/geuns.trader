@@ -1,14 +1,20 @@
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtCore import *
 import sys, time, os
 from common_util import *
 from db_handler import *
 from rest_api import *
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import datetime as dt
 
 settings =  getSettings()
-main_ui = uic.loadUiType(settings['system']['view'])[0]
+ui_file = settings['system']['view']
+main_ui = uic.loadUiType(ui_file)[0]
 
+is_new_ui = False
+if ui_file=='Main_v2.ui' or ui_file=='Main_v3.ui':
+    is_new_ui = True
 
 class Main(QtWidgets.QMainWindow, main_ui):
     idxSTATUS_CRCY          = 0
@@ -22,6 +28,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
     idxSTATUS_EarningAsk    = 8
     lblBtnExec = ['트레이딩 시작', '트레이딩 중지']
     global settings
+    global is_new_ui, ui_file
     def __init__(self, parent=None):
         super()
         QtWidgets.QMainWindow.__init__(self, parent)
@@ -41,7 +48,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             # self.lblSLOTS_header.append("코인수익")
             self.btnManualAsk.setEnabled(True)
             self.txtManualAsk.setEnabled(True)
-            self.lblSTATUS_header = ['', '슬롯#', '보유수량', '총매수금액',
+            self.lblSTATUS_header = ['', '슬롯', '보유수량', '총매수금액',
                                      '평가금액', '평균단가', '현재가격', '수익률',
                                      '평가손익', '매도수익', '실현수익', '총 이윤',
                                      '코인수익']
@@ -50,9 +57,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.btnManualAsk.setEnabled(False)
             self.txtManualAsk.setEnabled(False)
             self.lblOption.setText('자본\n잠식')
-            self.lblSTATUS_header = ['', '슬롯#', '보유수량', '총매수금액',
+            self.lblSTATUS_header = ['', '슬롯', '보유수량', '총매수금액',
                                      '평가금액', '평균단가', '현재가격', '수익률',
-                                     '평가손익', '매도수익', '자본잠식',
+                                     '평가손익', '매도수익', #, '자본잠식',
                                      '실현수익', '총 이윤']
 
         self.tblStatus.setColumnCount(len(self.lblSTATUS_header))
@@ -81,7 +88,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
                       'DASH':self.cboxDash, 'ETC':self.cboxEtc,
                       'QTUM':self.cboxQtum, 'ICX':self.cboxIcx,
                       'TRX':self.cboxTrx,  'VEN':self.cboxVen,
-                      'ELF':self.cboxElf,  'MITH':self.cboxMith}
+                      'ELF':self.cboxElf,  'MITH':self.cboxMith,
+                      'BTG':self.cboxBtg,  'MCO':self.cboxMco,
+                      'ZEC':self.cboxZec,  'OMG':self.cboxOmg,
+                      'KNC':self.cboxKnc}
         self.initAllCombos()
 
         # connect signals & slots
@@ -90,6 +100,16 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.cmbSellCrcy.currentIndexChanged.connect(self.inquiryMoreInfo)
         self.btnExecTrading.clicked.connect(self.toggleExec)
         self.btnManualAsk.clicked.connect(self.updateManualAsk)
+        self.btnReset.setVisible(False)
+        self.btnReset.clicked.connect(self.resetAll)
+
+        self.tblStatus.itemSelectionChanged.connect(self.selCoin)
+        self.fgr = None
+        self.cvs = None
+        self.lblG1.hide()
+        self.lblG2.hide()
+        self.lblG3.hide()
+        self.lblG4.hide()
 
         self.curr_prc = {}
         self.updateExecState()
@@ -108,9 +128,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if self.get_exec_state() is True:
             self.btnExecTrading.setText(self.lblBtnExec[1])
             self.lblExecStatus.setText('트레이딩 진행 중 ... ')
+            self.btnReset.setVisible(False)
         else:
             self.btnExecTrading.setText(self.lblBtnExec[0])
             self.lblExecStatus.setText('트레이딩 중단됨 ...')
+            self.btnReset.setVisible(True)
 
 
     def get_exec_state(self):
@@ -154,6 +176,95 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 elif isChecked is False and e.isChecked():
                     e.toggle()
 
+    def selCoin(self):
+        coin = self.tblStatus.selectedItems()
+        try:
+            crcy = coin[0].text()
+        except:
+            return
+        if self.cvs is not None:
+            self.gLayout.removeWidget(self.cvs)
+        self.fgr = plt.Figure()
+        self.cvs = FigureCanvas(self.fgr)
+        self.gLayout.addWidget(self.cvs)
+        ax = self.fgr.add_subplot(111)
+
+        r_db = self.db.req_db('s_prcs_g', (crcy,crcy))
+        r_db_2 = self.db.req_db('s_prc_gb', (crcy, crcy))
+        r_db_o = self.db.req_db('s_order_h', (crcy, ))
+        if r_db is False or r_db_2 is False:
+            return
+
+        self.lblG1.show()
+        self.lblG2.show()
+        self.lblG3.show()
+        self.lblG4.show()
+
+        y = [z[1] for z in r_db]
+        # ts = [z[0] for z in r_db]
+        ts = [(dt.datetime.strptime(str(z[0]), '%Y%m%d%H%M%S').timestamp())/1000 for z in r_db]
+        c_ts = ts[0]
+        num_p = len(y)
+        #x = list(range(c_ts, c_ts+num_p))
+
+        print(str(r_db_2))
+        min_prc = r_db_2[0][0]
+        max_prc = r_db_2[0][1]
+        c_ts = r_db_2[0][2]
+
+        print('y')
+        print(str(y))
+        print('num_p : '+str(num_p))
+        print('x')
+        print(str(ts))
+        print('num_x:'+str(len(ts)))
+        print("min : "+str(min_prc)+", max:"+str(max_prc))
+        c_date = int(c_ts/1000000)
+        c_time = c_ts%1000000
+        self.lblGcrcy.setText(crcy)
+        self.lblCtime.setText(get_ts((c_date,c_time)))
+        self.lblMinPrice.setText(format(min_prc, ','))
+        self.lblMaxPrice.setText(format(max_prc, ','))
+
+        ax.plot(ts,y,'k--')
+
+        color = ('b', 'g', 'r', 'c', 'm', 'y')
+        if r_db_o is not False:
+            i_c = 0
+            for order in r_db_o:
+                i_c = (i_c+1)%6
+                b_ts = dt.datetime.strptime(str(order[0]), '%Y%m%d%H%M%S').timestamp()/1000
+                a_ts = dt.datetime.strptime(str(order[2]), '%Y%m%d%H%M%S').timestamp()/1000
+                b_prc = order[1]
+                a_prc = order[3]
+                ax.plot(b_ts, b_prc, color[i_c]+'s')
+                ax.plot(a_ts, a_prc, color[i_c]+'^')
+
+        # 자주 사용하는 마커 패턴으로는 '--', 's', '^', '+' 등이 있습니다.
+        # 색상과 마커 패턴을 조합한 'r--'는 빨간색 대시라인을 의미하고,
+        # 'bs'는 파란색 사각형, 'g^'는 녹색 삼각형, 'g+'는 녹색 플러스 모양을 의미합니다.
+        # 문자	색상
+        # b	blue(파란색)
+        # g	green(녹색)
+        # r	red(빨간색)
+        # c	cyan(청록색)
+        # m	magenta(마젠타색)
+        # y	yellow(노란색)
+        # k	black(검은색)
+        # w	white(흰색)
+
+        ax.set_xlabel('time')
+        # ax.set_ylabel(crcy)
+        ax.xaxis.set_ticklabels([])
+
+        ax.grid()
+        self.cvs.draw()
+
+
+
+        # for col in selectedRow:
+        #     pass #print(str(col.text()))
+
 
     def updateManualAsk(self):
         m_ask_krw=0
@@ -172,16 +283,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
             return
 
         # r = self.db.req_db('s_exec', None)
-        r_db = self.db.req_db('s_status', (crcy, ))
-        if r_db is False:
-            return
-        status = r_db[0]
-        total_earning_ask = status[6]+m_ask_krw
-        earning_coin_amnt = status[7] - amnt
-        earning_coin_krw = status[8] -m_ask_krw
 
-        self.db.req_db('u_status_coin', (total_earning_ask, earning_coin_amnt, \
-                                         earning_coin_krw, crcy,))
+        self.db.req_db('iu_m_ask', (crcy, m_ask_krw, amnt, m_ask_krw))
+
+        sleep(10)
         self.inquiryStatus()
 
     def inquiryMoreInfo(self):
@@ -192,7 +297,19 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         self.lblFirstSlotKrw.setText(format(int(cfg['first_slot_krw']), ','))
         self.lblSlotKrw.setText(format(int(cfg['slot_krw']), ','))
-        self.lblMinPrc.setText(format(int(cfg['min_prc']), ','))
+        if ui_file=='Main_v2.ui':
+            self.lblMinPrc.setText(format(int(cfg['min_prc']), ','))
+        if ui_file=='Main_v3.ui':
+            self.lblAdjSlotKrw.setText(format(int(cfg['add_slot_krw']), ','))
+            v = round(cfg['adj_new_slot_gap']*100, 1)
+            if v==int(v):
+                v = int(v)
+            self.lblAdjNewSlotGap.setText(str(v)+' %')
+            v = round(cfg['max_new_slot_gap']*100, 1)
+            if v==int(v):
+                v = int(v)
+            self.lblMaxNewSlotGap.setText(str(v)+' %')
+
 
         v = round(cfg['add_bid_rate']*100, 1)
         if v == int(v):
@@ -262,13 +379,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
             qtype = 's_slot_a'  # 전체 (all)
         elif cmb==3:
             qtype = 's_slot_w'  # 구매 대기 (waiting)
-        elif cmb==4:
+        elif cmb==5:
             qtype = 's_slot_nw' # 보유 +익절 : 구매 대기만 제외 (not waiting)
         else:
             qtype = 's_slot_yn'
-            qtype = 's_slot_yn'
-            if cmb==1:
-                values = ('N', )    # 보유 중
+            if cmb==1 or cmb==4:    # 보유 중 + 구매 대기
+                values = ('N', )
             else:
                 values = ('Y', )    # 익절 슬롯
 
@@ -279,6 +395,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         print(r_db)
         if r_db is not False:
             self.tblSlots.clear()
+            self.tblSlots.setSortingEnabled(False)
             sleep(0.1)
             self.tblSlots.setRowCount(len(r_db))
             self.tblSlots.setHorizontalHeaderLabels(self.lblSLOTS_header)
@@ -316,8 +433,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 avr_prc = e[9]
                 bid_krw = int(avr_prc * e[5])
                 # print(crcy+"] avr:"+str(avr_prc)+", amnt:"+str(e[5])+":"+str(bid_krw))
-                if e[4]==0:
-                    if cmb==1:
+                if e[4]==0:             # num_of_bid == 0
+                    if cmb==1:          # 보유 중 only
                         continue
                     ask_yn='구매대기'
                     krw = 0
@@ -365,9 +482,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 row_data.append(profit_rt)       # 수익률
                 row_data.append(format(e[15],","))      # 다음매수가
                 row_data.append(format(e[19],","))      # 익절가
-                row_data.append(format(profit, ","))    # 수익 실현
+                row_data.append(format(int(profit), ","))    # 수익 실현
                 self.setTableRowData(self.tblSlots, idx_row, row_data)
                 idx_row +=1
+
+
+        self.tblSlots.setSortingEnabled(True)
 
         if self.need_cbox_init:
             self.need_cbox_init = False
@@ -386,17 +506,20 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.tblSlots.resizeRowsToContents()
 
     def inquiryStatus(self):
-
         r_db = self.db.req_db('s_a_status')
         total_coin_krw = 0
         print(r_db)
         self.tblStatus.clear()
+        self.tblStatus.setSortingEnabled(False)
+
         sleep(0.1)
         total_minus = 0
         total_benefit = 0
         total_benefit_krw = 0
         total_coin_ask = 0
         total_coin_profit_krw = 0
+        total_slots = 0
+        total_sell_profit = 0
         if r_db is not False:
             self.tblStatus.setRowCount(len(r_db))
             self.tblStatus.setHorizontalHeaderLabels(self.lblSTATUS_header)
@@ -413,12 +536,17 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 row_data = []
                 row_data.append(e[0])        # 코인 (crcy)
                 row_data.append(e[1])        # 총 슬롯 수(num of slots)
+                total_slots += e[1]
                 row_data.append(format(round(e[4], 4), ','))        # 전체 수량 (bid amnt)
                 current_bid_krw = int(e[4]*e[5])
                 bid_krw = self.coin_config[crcy]['first_slot_krw'] \
                           + self.coin_config[crcy]['slot_krw']*(e[1]-1)
+                if e[1]>2:
+                    for i in range(2, e[1]):
+                        bid_krw += int(self.coin_config[crcy]['add_slot_krw'])*(i-1)
+                # print(crcy+", bid*98.5%:"+str(bid_krw*0.9985)+", total_krw : "+str(current_bid_krw))
                 # print("base bid (98.5%) :"+str(bid_krw)+"("+str(bid_krw*0.985)+"), curr bid krw(98.5%) : "+str(current_bid_krw))
-                if bid_krw*0.985>current_bid_krw:
+                if bid_krw*0.9985>current_bid_krw and self.m_ask_yn is False:
                     minus = current_bid_krw-bid_krw
                     # print("minus : "+str(minus))
                     total_minus += minus
@@ -431,11 +559,13 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     profit_rw = round((curr_prc/e[5]-1)*100, 2)
                     row_data.append(str(profit_rw)+' %') # 수익률
                     profit_krw = int(round((curr_prc/e[5]-1)*e[3], 0))
-                    total_coin_profit_krw +=profit_krw
                     row_data.append(format(profit_krw, ','))  # 평가 손익금
-                    row_data.append(format(e[6], ','))        # 매도 수익
-                    if self.m_ask_yn is False:
-                        row_data.append(format(int(round(minus, 0)), ','))       # 자본 잠식
+                    total_coin_profit_krw +=profit_krw
+                    sell_profit = int(e[6])
+                    row_data.append(format(sell_profit, ','))        # 매도 수익
+                    total_sell_profit += sell_profit
+                    # if self.m_ask_yn is False:
+                    #    row_data.append(format(int(round(minus, 0)), ','))       # 자본 잠식
                     benefit_krw = round(e[6]+minus, 0)
                     row_data.append(format(int(benefit_krw), ',')) # 실현 수익 = 매도 수익 - 자본 잠식
                     benefit = benefit_krw+profit_krw
@@ -465,14 +595,22 @@ class Main(QtWidgets.QMainWindow, main_ui):
             total_coin_krw = int(round(total_coin_krw, 0))
 
         # 실적 정보
+        if self.m_ask_yn is True:
+            total_benefit += int(round(total_coin_ask,0))
+
         self.lblBenefit.setText(format(int(total_benefit), ',')) # 평가 수익 = 총 이윤 - 자본잠식
         self.lblBenefitKrw.setText(format(int(total_benefit_krw), ',')) # 실현 수익 = 총 이윤 - 자본잠식
-        self.lblCurBenefit.setText(format(total_coin_profit_krw, ',')) # 평가손익
+        if is_new_ui:
+            self.lblCurBenefit.setText(format(total_coin_profit_krw, ',')) # 평가손익
+            self.lblNumSlot.setText(str(total_slots))
+            self.lblSellProfit.setText(format(total_sell_profit,','))
+
         if self.m_ask_yn is True:
             self.lblOptVal.setText(format(int(round(total_coin_ask,0)), ','))    # 코인 수익
         else:
             self.lblOptVal.setText(format(int(round(total_minus,0)), ','))       # 자본 잠식
 
+        self.tblStatus.setSortingEnabled(True)
         self.tblStatus.resizeColumnsToContents()
         self.tblStatus.resizeRowsToContents()
         self.inquirySlots()
@@ -488,10 +626,51 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         self.updateExecState()
 
+    def resetAll(self):
+        qm = QtWidgets.QMessageBox
+        reply = qm.question(self, '전량매도 초기화',
+                    '정말로 모든 거래를 취소하고 삭제할까요?', qm.Yes|qm.No)
+
+        if reply == qm.No:
+            return
+
+        r_db = self.db.req_db('s_a_status')
+        if r_db is not False:
+            for e in r_db:
+                print("cancel new slot bid : "+e[0])
+                ccl_order(e[2], e[0], BID)
+            self.db.req_db('d_status')
+        r_db = self.db.req_db('s_slot_yn', ('N',))
+        if r_db is not False:
+            for e in r_db:
+                crcy = e[1]
+                next_bid_order_id = e[17]
+                ask_order_id = e[18]
+                if next_bid_order_id != '' and len(next_bid_order_id)>0:
+                    ccl_order(next_bid_order_id, crcy, BID)
+                if ask_order_id!='' and len(ask_order_id)>0:
+                    ccl_order(ask_order_id, crcy, ASK)
+                r = call_api(GET_BAL, crcy)
+                if r['status']=='0000':
+                    key_str = 'available_'+crcy.lower()
+                    try:
+                        amnt = ceil(float(r['data'][key_str]), 4)
+                        if amnt>min_units[crcy]:
+                            call_api(MKT_ASK, crcy, {'units':amnt})
+                    except:
+                        pass
+            pass
+        self.db.req_db('d_a_slot')
+        self.btnReset.setVisible(False)
+        self.initAllCombos()
+        self.inquiryStatus()
+        pass
+
+
 app = QtWidgets.QApplication(sys.argv)
 
-if __name__ == "__main__":
-    myWindow = Main(None)
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    myWindow.show()
-    app.exec_()
+# if __name__ == "__main__":
+myWindow = Main(None)
+# app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+myWindow.show()
+app.exec_()
