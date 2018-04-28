@@ -59,7 +59,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblOption.setText('자본\n잠식')
             self.lblSTATUS_header = ['', '슬롯', '보유수량', '총매수금액',
                                      '평가금액', '평균단가', '현재가격', '수익률',
-                                     '평가손익', '매도수익', #, '자본잠식',
+                                     '평가손익', '매도수익', #'자본잠식',
                                      '실현수익', '총 이윤']
 
         self.tblStatus.setColumnCount(len(self.lblSTATUS_header))

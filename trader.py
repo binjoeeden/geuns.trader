@@ -265,8 +265,8 @@ class Main(threading.Thread):
                         else:
                             bid_date = s['ask_date']
                             bid_time = s['ask_time']
-                        s['ask_date'] = r['date']
-                        s['ask_time'] = r['time']
+                        s['ask_date'] = self.prcs[crcy][DATE]
+                        s['ask_time'] = self.prcs[crcy][TIME]
                         k = (s['crcy'], bid_date, bid_time, s['bid_prc'],
                              s['ask_date'], s['ask_time'], s['ask_prc'])
                         self.db.req_db('i_order_h', k)
