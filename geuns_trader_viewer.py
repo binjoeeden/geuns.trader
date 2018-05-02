@@ -42,6 +42,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                             '매도수익']
 
 
+        self.handlingManualAsk = False
         if self.setting['system']['manual_ask_yn']==1:
             self.m_ask_yn = True
             self.lblOption.setText('코인\n수익')
@@ -95,7 +96,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.initAllCombos()
 
         # connect signals & slots
-        self.btnInquiryStatus.clicked.connect(self.inquiryStatus)
+        self.btnToggleInquiry.clicked.connect(self.toggleInquiryStatus)
+        self.toggleInquiry=None
         self.cmbAskYn.currentIndexChanged.connect(self.inquirySlots)
         self.cmbSellCrcy.currentIndexChanged.connect(self.inquiryMoreInfo)
         self.btnExecTrading.clicked.connect(self.toggleExec)
@@ -103,17 +105,20 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.btnReset.setVisible(False)
         self.btnReset.clicked.connect(self.resetAll)
 
-        self.tblStatus.itemSelectionChanged.connect(self.selCoin)
-        self.fgr = None
-        self.cvs = None
-        self.lblG1.hide()
-        self.lblG2.hide()
-        self.lblG3.hide()
-        self.lblG4.hide()
+        if  ui_file=='Main_v3.ui':
+            self.tblStatus.itemSelectionChanged.connect(self.selCoin)
+            self.fgr = None
+            self.cvs = None
+            self.lblG1.hide()
+            self.lblG2.hide()
+            self.lblG3.hide()
+            self.lblG4.hide()
+            self.lblG5.hide()
 
         self.curr_prc = {}
         self.updateExecState()
-        self.inquiryStatus()
+        #QtCore.QTimer.singleShot(5000, lambda:self.inquiryStatus())
+        self.toggleInquiryStatus()
 
 
     def initAllCombos(self):
@@ -168,7 +173,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
     def toggleCbox(self, isChecked):
         self.inquirySlots()
     def toggleCboxAll(self, isChecked):
-        print("toggled: "+str(isChecked))
+        # print("toggled: "+str(isChecked))
         for e in self.cboxs.values():
             if e.isEnabled():
                 if isChecked and e.isChecked() is False:
@@ -195,10 +200,14 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if r_db is False or r_db_2 is False:
             return
 
+        if self.toggleInquiry:
+            self.toggleInquiryStatus()
+
         self.lblG1.show()
         self.lblG2.show()
         self.lblG3.show()
         self.lblG4.show()
+        self.lblG5.show()
 
         y = [z[1] for z in r_db]
         # ts = [z[0] for z in r_db]
@@ -207,18 +216,18 @@ class Main(QtWidgets.QMainWindow, main_ui):
         num_p = len(y)
         #x = list(range(c_ts, c_ts+num_p))
 
-        print(str(r_db_2))
+        #  print(str(r_db_2))
         min_prc = r_db_2[0][0]
         max_prc = r_db_2[0][1]
         c_ts = r_db_2[0][2]
 
-        print('y')
-        print(str(y))
-        print('num_p : '+str(num_p))
-        print('x')
-        print(str(ts))
-        print('num_x:'+str(len(ts)))
-        print("min : "+str(min_prc)+", max:"+str(max_prc))
+        # print('y')
+        # print(str(y))
+        # print('num_p : '+str(num_p))
+        # print('x')
+        # print(str(ts))
+        # print('num_x:'+str(len(ts)))
+        # print("min : "+str(min_prc)+", max:"+str(max_prc))
         c_date = int(c_ts/1000000)
         c_time = c_ts%1000000
         self.lblGcrcy.setText(crcy)
@@ -230,6 +239,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         color = ('b', 'g', 'r', 'c', 'm', 'y')
         if r_db_o is not False:
+            self.lblAskNum.setText(str(len(r_db_o)))
             i_c = 0
             for order in r_db_o:
                 i_c = (i_c+1)%6
@@ -237,8 +247,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 a_ts = dt.datetime.strptime(str(order[2]), '%Y%m%d%H%M%S').timestamp()/1000
                 b_prc = order[1]
                 a_prc = order[3]
-                ax.plot(b_ts, b_prc, color[i_c]+'s')
-                ax.plot(a_ts, a_prc, color[i_c]+'^')
+                ax.plot(b_ts, b_prc, color[i_c]+'^')
+                ax.plot(a_ts, a_prc, color[i_c]+'s')
 
         # 자주 사용하는 마커 패턴으로는 '--', 's', '^', '+' 등이 있습니다.
         # 색상과 마커 패턴을 조합한 'r--'는 빨간색 대시라인을 의미하고,
@@ -253,7 +263,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         # k	black(검은색)
         # w	white(흰색)
 
-        ax.set_xlabel('time')
+        # ax.set_xlabel('time')
         # ax.set_ylabel(crcy)
         ax.xaxis.set_ticklabels([])
 
@@ -267,6 +277,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
 
     def updateManualAsk(self):
+        if self.handlingManualAsk is True:
+            return
+        self.handlingManualAsk = True
+        self.btnManualAsk.setEnabled(False)
         m_ask_krw=0
         amnt = 0
         try:
@@ -277,7 +291,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             pass
 
         crcy = self.cmbSellCrcy.currentText()
-        print("m_ask_krw : "+str(m_ask_krw)+", amnt : "+str(amnt)+", crcy : "+crcy)
+        # print("m_ask_krw : "+str(m_ask_krw)+", amnt : "+str(amnt)+", crcy : "+crcy)
 
         if m_ask_krw==0 or crcy not in self.coin_config['crcy_list'] or amnt==0:
             return
@@ -287,7 +301,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.db.req_db('iu_m_ask', (crcy, m_ask_krw, amnt, m_ask_krw))
 
         sleep(10)
-        self.inquiryStatus()
+        self.handlingManualAsk = False
+        if self.toggleInquiry is False:
+            self.toggleInquiryStatus()
 
     def inquiryMoreInfo(self):
         crcy = self.cmbSellCrcy.currentText()
@@ -391,8 +407,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         r_db = self.db.req_db(qtype, values)
         sell_crcy_list = []
-        print("slots !!!")
-        print(r_db)
+        # print("slots !!!")
+        # print(r_db)
         if r_db is not False:
             self.tblSlots.clear()
             self.tblSlots.setSortingEnabled(False)
@@ -492,23 +508,47 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if self.need_cbox_init:
             self.need_cbox_init = False
 
-        print("sell crcy list!!! -> "+str(sell_crcy_list))
-        self.cmbSellCrcy.clear()
-        for sell_crcy in sell_crcy_list:
-            self.cmbSellCrcy.addItem(sell_crcy)
-        if len(sell_crcy_list)>0:
-            self.cmbSellCrcy.setEnabled(True)
-        else:
-            self.cmbSellCrcy.setEnabled(False)
+        # print("sell crcy list!!! -> "+str(sell_crcy_list))
+        if  self.cmbSellCrcy.currentIndex()==-1:
+            self.cmbSellCrcy.clear()
+            for sell_crcy in sell_crcy_list:
+                self.cmbSellCrcy.addItem(sell_crcy)
+            if len(sell_crcy_list)>0:
+                self.cmbSellCrcy.setEnabled(True)
+            else:
+                self.cmbSellCrcy.setEnabled(False)
 
         self.tblSlots.setRowCount(idx_row)
         self.tblSlots.resizeColumnsToContents()
         self.tblSlots.resizeRowsToContents()
 
+    def toggleInquiryStatus(self):
+        bInquiry = self.toggleInquiry
+        if bInquiry is False or bInquiry is None:
+            self.toggleInquiry = True
+            if ui_file=='Main_v3.ui':
+                self.btnToggleInquiry.setText('조회 중지')
+                self.btnToggleInquiry.update()
+                self.btnManualAsk.setEnabled(False)
+                self.txtManualAsk.setEnabled(False)
+            self.inquiryStatus()
+        else:
+            self.toggleInquiry = False
+            if ui_file=='Main_v3.ui':
+                self.btnToggleInquiry.setText('조회 시작')
+                self.btnToggleInquiry.update()
+                self.btnManualAsk.setEnabled(True)
+                self.txtManualAsk.setEnabled(True)
+
+
     def inquiryStatus(self):
+        if self.toggleInquiry is False:
+            return
+        cur_time = get_ts(get_date_time())
+        print("get information start : "+cur_time)
         r_db = self.db.req_db('s_a_status')
         total_coin_krw = 0
-        print(r_db)
+        # print(r_db)
         self.tblStatus.clear()
         self.tblStatus.setSortingEnabled(False)
 
@@ -527,10 +567,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
             for e in r_db:
                 minus = 0
                 crcy = e[0]
-                print("config : "+str(self.coin_config[crcy]))
+                # print("config : "+str(self.coin_config[crcy]))
 
                 r = call_api(GET_PRC, crcy)
-                print(r)
+                # print(r)
                 self.curr_prc[crcy] = int(r['data']['closing_price'])
                 curr_prc = self.curr_prc[crcy]
                 row_data = []
@@ -625,6 +665,13 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblAvailKrw.setText(format(r['data']['available_krw'],','))
 
         self.updateExecState()
+        cur_time = get_ts(get_date_time())
+        self.lblUpdatedTime.setText(cur_time)
+
+        if self.toggleInquiry:
+            interval = self.setting['system']['ui_refresh_interval']*1000
+            QtCore.QTimer.singleShot(interval, lambda:self.inquiryStatus())
+        print("get information end : "+cur_time)
 
     def resetAll(self):
         qm = QtWidgets.QMessageBox

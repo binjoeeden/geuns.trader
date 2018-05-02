@@ -22,7 +22,7 @@
    <enum>QTabWidget::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="btnInquiryStatus">
+   <widget class="QPushButton" name="btnToggleInquiry">
     <property name="geometry">
      <rect>
       <x>1050</x>
@@ -68,7 +68,7 @@
     <property name="geometry">
      <rect>
       <x>461</x>
-      <y>21</y>
+      <y>22</y>
       <width>181</width>
       <height>21</height>
      </rect>
@@ -181,7 +181,7 @@
         <x>9</x>
         <y>265</y>
         <width>881</width>
-        <height>251</height>
+        <height>161</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="gLayout"/>
@@ -216,6 +216,12 @@
        </item>
        <item>
         <widget class="QLabel" name="lblGcrcy">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>굴림</family>
@@ -255,6 +261,12 @@
        </item>
        <item>
         <widget class="QLabel" name="lblCtime">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>굴림</family>
@@ -271,6 +283,45 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblG5">
+         <property name="font">
+          <font>
+           <family>굴림</family>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>익절 횟수</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblAskNum">
+         <property name="font">
+          <font>
+           <family>굴림</family>
+           <pointsize>12</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::RichText</enum>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -1081,8 +1132,8 @@
          <font>
           <family>굴림</family>
           <pointsize>12</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
+          <weight>75</weight>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
@@ -1287,7 +1338,7 @@
          <number>8</number>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="clearButtonEnabled">
          <bool>true</bool>
@@ -2010,6 +2061,63 @@ max</string>
     </property>
     <property name="text">
      <string>전체 초기화</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblG2_2">
+    <property name="geometry">
+     <rect>
+      <x>558</x>
+      <y>56</y>
+      <width>161</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>굴림</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>마지막 업데이트 시각 :</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblUpdatedTime">
+    <property name="geometry">
+     <rect>
+      <x>728</x>
+      <y>56</y>
+      <width>171</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>150</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <family>굴림</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>

@@ -9,7 +9,8 @@ post_fix = ["/public/ticker/",
             "/trade/place",
             "/trade/cancel",
             "/info/order_detail",
-            "/info/balance"]
+            "/info/balance",
+            "/public/recent_transactions/"]
 
 GET_PRC = 0
 MKT_BID = 1
@@ -18,10 +19,12 @@ REQ_ORD = 3
 CCL_ORD = 4
 CHK_ORD = 5
 GET_BAL = 6
+HST_ORD = 7
+
 
 MAX_TYPE = CHK_ORD
 STR_API_TYPE =['GET_PRC', 'MKT_BID', 'MKT_ASK', 'REQ_ORD', 'CCL_ORD',
-               'CHK_ORD', 'GET_BAL']
+               'CHK_ORD', 'GET_BAL', 'HST_ORD']
 
 BID=0
 ASK=1
@@ -49,11 +52,12 @@ def call_api(api_type, crcy, rgParam={}, t_sleep=retry_delay):
         print("api_type error")
         return
 
-    rgParam['Payment_currency'] = 'KRW'
-    rgParam['order_currency'] = crcy
-    if api_type!=REQ_ORD:
-        rgParam['currency'] = crcy
-    if api_type==GET_PRC:
+    if api_type != HST_ORD:
+        rgParam['Payment_currency'] = 'KRW'
+        rgParam['order_currency'] = crcy
+        if api_type!=REQ_ORD:
+            rgParam['currency'] = crcy
+    if api_type in (GET_PRC, HST_ORD):
         if crcy is not None:
             url = post_fix[api_type]+crcy
         else:
@@ -73,7 +77,7 @@ def call_api(api_type, crcy, rgParam={}, t_sleep=retry_delay):
                         break
                     if result['message'].find('사용가능')>0 and result['message'].find('초과')>0:
                         break
-            print("call_api failed! "+STR_API_TYPE[api_type]+", param:"+str(rgParam))
+            print("call_api failed! "+STR_API_TYPE[api_type]+", url:"+url+", param:"+str(rgParam))
             print(" result:"+str(result)+"\n - sleep : "+str(t_sleep))
             sleep(t_sleep)
 
