@@ -1,0 +1,99 @@
+<settings>
+  <system>
+    <window_title>Bins Trader</window_title>
+	  <title_icon>title_icon_bins.png</title_icon>
+    <api_key></api_key>
+    <api_secret></api_secret>
+    <view>Main_v3.ui</view>
+    <crcy>XRP, ETH,QTUM,MITH,KNC, EOS</crcy>										<!-- 거래할 코인 목록, 컴마(,)로 구분 -->
+    <db_file_name>bithumb.db</db_file_name>
+    <sleep_period>5</sleep_period>								<!-- 모든 코인의 거래를 체크하고 그다음 체크하기를 시작하기까지 쉬는 시간 (단위:초)-->
+    <retry_delay>5</retry_delay>								<!-- 빗썸 서버의 응답이 실패 (ex. Try Again)되면 다시 서버로 요청을 재시도 할 때까지 기다리는 시간 -->
+    <manual_ask_yn>1</manual_ask_yn>            <!-- 실행중에 변경할 수 없다 -->
+    <pre_order>0</pre_order>
+    <ui_refresh_interval>30</ui_refresh_interval>
+  </system>
+  <common>
+    <new_slot_gap>0.03</new_slot_gap>							<!-- 새로운 슬롯을 만드는 하락 비율 -->
+    <adj_new_slot_gap>0</adj_new_slot_gap>
+    <max_new_slot_gap>0.03</max_new_slot_gap>
+    <add_bid_rate>0.2</add_bid_rate>							<!-- 물타기 비율 0.1 == 10% 하락 되면 물타기 -->
+    <adj_add_bid_rt>0</adj_add_bid_rt>
+    <first_slot_ask_rt>0.025</first_slot_ask_rt>
+    <adj_first_slot_ask_rt>0</adj_first_slot_ask_rt>
+    <good_ask_rt>0.025</good_ask_rt>								<!-- 익절 조건 0.05 == 5% -->
+    <adj_good_ask_rt>0</adj_good_ask_rt>
+    <first_slot_krw>50000</first_slot_krw>						<!-- 첫번째 슬롯의 시작 구매 금액 -->
+    <slot_krw>50000</slot_krw>									<!-- 슬롯의 시작 구매 금액 -->
+	<add_slot_krw>0</add_slot_krw>
+    <max_slot_num>0</max_slot_num>
+    <min_prc>10</min_prc>
+  </common>
+  <QTUM>
+    <max_slot_num>1</max_slot_num>
+    <min_amnt_krw>10</min_amnt_krw>
+  </QTUM>
+  <MITH>
+    <min_amnt_krw>1</min_amnt_krw>
+  </MITH>
+  <KNC>
+    <max_slot_num>1</max_slot_num>
+    <min_prc>10</min_prc>
+    <min_amnt_krw>1</min_amnt_krw>
+  </KNC>
+  <XRP>
+    <min_amnt_krw>1</min_amnt_krw>
+  </XRP>
+  <ETH>
+    <min_amnt_krw>1000</min_amnt_krw>
+  </ETH>
+  <DASH>
+    <min_amnt_krw>500</min_amnt_krw>
+  </DASH>
+  <LTC>
+    <min_amnt_krw>100</min_amnt_krw>
+  </LTC>
+  <ETC>
+    <min_amnt_krw>10</min_amnt_krw>
+  </ETC>
+  <BCH>
+    <min_amnt_krw>1000</min_amnt_krw>
+  </BCH>
+  <XMR>
+    <min_amnt_krw>100</min_amnt_krw>
+  </XMR>
+  <ZEC>
+    <min_amnt_krw>500</min_amnt_krw>
+  </ZEC>
+  <BTG>
+    <min_amnt_krw>100</min_amnt_krw>
+  </BTG>
+  <ICX>
+    <min_amnt_krw>1</min_amnt_krw>
+  </ICX>
+  <TRX>
+    <min_amnt_krw>1</min_amnt_krw>
+  </TRX>
+  <VEN>
+    <min_amnt_krw>1</min_amnt_krw>
+  </VEN>
+  <ELF>
+    <min_amnt_krw>1</min_amnt_krw>
+  </ELF>
+  <MCO>
+    <min_amnt_krw>5</min_amnt_krw>
+  </MCO>
+  <OMG>
+    <min_prc>100</min_prc>
+    <min_amnt_krw>10</min_amnt_krw>
+  </OMG>
+  <BTC>
+    <first_slot_krw>100000</first_slot_krw>
+	<slot_krw>100000</slot_krw>
+    <min_amnt_krw>1000</min_amnt_krw>
+  </BTC>
+  <EOS>
+    <min_prc>800</min_prc>
+    <min_amnt_krw>10</min_amnt_krw>
+  </EOS>
+</settings>

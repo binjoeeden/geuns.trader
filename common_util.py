@@ -72,8 +72,8 @@ def ceil_krw(a,b):
 def get_date_time(ts=None):
     if ts is None:
         ts = dt.datetime.now()
-    date = ts.year*10000+ts.month*100+ts.day
-    time = ts.hour*10000+ts.minute*100+ts.second
+    date = int(ts.year*10000+ts.month*100+ts.day)
+    time = int(ts.hour*10000+ts.minute*100+ts.second)
     return (date, time)
 
 def get_ts_slot(e):
@@ -84,12 +84,12 @@ def get_ts_slot(e):
     yy = int(date/10000)
     mmdd = date-yy*10000
     mm = int(mmdd/100)
-    dd = mmdd-mm*100
+    dd = int(mmdd-mm*100)
     c_date = str(yy%100)+"/"+str(mm)+"/"+str(dd)
     hh = int(time/10000)
     MMss = time-hh*10000
     MM = int(MMss/100)
-    ss = MMss-MM*100
+    ss = int(MMss-MM*100)
     c_time = str(hh)+":"+str(MM)
     return c_date+" "+c_time
 
@@ -101,12 +101,12 @@ def get_ts(e):
     yy = int(date/10000)
     mmdd = date-yy*10000
     mm = int(mmdd/100)
-    dd = mmdd-mm*100
+    dd = int(mmdd-mm*100)
     c_date = str(yy)+"/"+str(mm)+"/"+str(dd)
     hh = int(time/10000)
     MMss = time-hh*10000
     MM = int(MMss/100)
-    ss = MMss-MM*100
+    ss = int(MMss-MM*100)
     c_time = str(hh)+":"+str(MM)+":"+str(ss)
     return c_date+" "+c_time
 

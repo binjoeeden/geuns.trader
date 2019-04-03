@@ -38,11 +38,11 @@ class DB_Handler:
                              total_bid_amnt,  avr_prc, total_earning_ask,
                              earning_coin_amnt, earning_coin_krw)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) '''
-        elif query_type=='u_status_coin':
-            sql = ''' UPDATE status SET total_earning_ask=?, earning_coin_amnt=?,
-                                        earning_coin_krw=?
-                      WHERE crcy = ?
-                  '''
+        # elif query_type=='u_status_coin':
+        #     sql = ''' UPDATE status SET total_earning_ask=?, earning_coin_amnt=?,
+        #                                 earning_coin_krw=?
+        #               WHERE crcy = ?
+        #           '''
         elif query_type=='s_m_ask':
             sql = ''' SELECT * FROM manual_ask where crcy=? '''
         elif query_type=='iu_m_ask':
@@ -56,6 +56,8 @@ class DB_Handler:
                         WHERE crcy = ?  '''
         elif query_type=='s_a_status':
             sql = 'SELECT * FROM  status'
+        elif query_type=='s_n_ask_status':
+            sql = 'SELECT crcy, count(*) ask_cnt FROM order_hist GROUP BY crcy HAVING crcy=?'
         elif query_type=='d_status':
             sql = 'DELETE FROM status'
         elif query_type=='i_slot':
@@ -68,6 +70,8 @@ class DB_Handler:
                       VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?,
                               ?, ?, ?, ?, ?, ?, ?, ?, ?)
                   '''
+        elif query_type=='u_slot_new':
+            sql = 'UPDATE slot SET bid_order_id=? WHERE crcy=? and c_date=0'
         elif query_type=='u_slot':
             sql = ''' UPDATE slot SET  c_date=?, c_time=?,
                                        num_of_bid=?, total_bid_amnt=?, bid_amnt=?, bid_prc=?, bid_krw=?,
@@ -88,21 +92,23 @@ class DB_Handler:
             sql = "SELECT * FROM slot where crcy=? order by crcy, ask_yn"
         elif query_type=='s_slot_yn':
             sql = "SELECT * FROM slot where ask_yn=? order by crcy"
+        elif query_type=='s_slot_y':
+            sql = "SELECT * FROM slot where ask_yn='Y' order by ask_date*1000000+ask_time DESC"
         elif query_type=='s_slot_w':
             sql = "SELECT * FROM slot where num_of_bid=0 order by crcy"
         elif query_type=='s_slot_nw':
             sql = "SELECT * FROM slot where num_of_bid>0 order by crcy"
-        elif query_type=='i_order_hist':
-            sql = ''' INSERT INTO order_hist('order_id', 'slot_id', 'crcy',
-                                             'cont_date', 'cont_time', 'bidask',
-                                             'total_amnt', 'result_amnt', 'krw',
-                                             'fee', 'err_msg')
-                          VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
-        elif query_type=='u_order_hist':
-            sql = ''' UPDATE order_hist SET result_amnt=?, krw=?, fee=?
-                                  WHERE order_id=? and slot_id=? and crcy=?'''
-        elif query_type=='s_order_hist': # 결과물 bid/ask 구분 필요함
-            sql = "SELECT * FROM order_hist where crcy=? and slot_id=?'' "
+        # elif query_type=='i_order_hist':
+        #     sql = ''' INSERT INTO order_hist('order_id', 'slot_id', 'crcy',
+        #                                      'cont_date', 'cont_time', 'bidask',
+        #                                      'total_amnt', 'result_amnt', 'krw',
+        #                                      'fee', 'err_msg')
+        #                   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+        # elif query_type=='u_order_hist':
+        #     sql = ''' UPDATE order_hist SET result_amnt=?, krw=?, fee=?
+        #                           WHERE order_id=? and slot_id=? and crcy=?'''
+        # elif query_type=='s_order_hist': # 결과물 bid/ask 구분 필요함
+        #     sql = "SELECT * FROM order_hist where crcy=? and slot_id=?'' "
         elif query_type=='s_exec':
             sql = "SELECT * FROM execution"
         elif query_type=='u_exec':

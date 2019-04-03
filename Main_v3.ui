@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1202</width>
+    <width>1197</width>
     <height>652</height>
    </rect>
   </property>
@@ -151,7 +151,7 @@
        <bool>false</bool>
       </attribute>
      </widget>
-     <widget class="QLabel" name="label_11">
+     <widget class="QLabel" name="lblComment">
       <property name="geometry">
        <rect>
         <x>48</x>
@@ -181,7 +181,7 @@
         <x>9</x>
         <y>265</y>
         <width>881</width>
-        <height>161</height>
+        <height>251</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="gLayout"/>
@@ -456,7 +456,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="maxVisibleItems">
         <number>6</number>
@@ -928,13 +928,19 @@
     <widget class="QWidget" name="gridLayoutWidget_5">
      <property name="geometry">
       <rect>
-       <x>12</x>
-       <y>22</y>
-       <width>221</width>
+       <x>10</x>
+       <y>21</y>
+       <width>231</width>
        <height>111</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinimumSize</enum>
+      </property>
+      <property name="verticalSpacing">
+       <number>0</number>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label_5">
         <property name="font">
@@ -1890,8 +1896,7 @@ max</string>
          </font>
         </property>
         <property name="text">
-         <string>슬롯
-수</string>
+         <string>슬롯</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -1930,7 +1935,7 @@ max</string>
          </font>
         </property>
         <property name="text">
-         <string>실현
+         <string>매도
 수익</string>
         </property>
         <property name="alignment">
@@ -2010,8 +2015,7 @@ max</string>
          </font>
         </property>
         <property name="text">
-         <string>매도
-수익</string>
+         <string>익절</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -2019,7 +2023,7 @@ max</string>
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QLabel" name="lblSellProfit">
+       <widget class="QLabel" name="lblTotAskNum">
         <property name="font">
          <font>
           <family>굴림</family>
@@ -2126,7 +2130,7 @@ max</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1202</width>
+     <width>1197</width>
      <height>21</height>
     </rect>
    </property>

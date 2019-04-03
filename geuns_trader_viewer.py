@@ -5,7 +5,10 @@ from common_util import *
 from db_handler import *
 from rest_api import *
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 import datetime as dt
 
 settings =  getSettings()
@@ -49,15 +52,17 @@ class Main(QtWidgets.QMainWindow, main_ui):
             # self.lblSLOTS_header.append("코인수익")
             self.btnManualAsk.setEnabled(True)
             self.txtManualAsk.setEnabled(True)
-            self.lblSTATUS_header = ['', '슬롯', '보유수량', '총매수금액',
+            self.lblComment.setText("  ※ 매도수익 = 매도 원화 - 매수 원화        ※ 총 이윤 = 매도수익 + (보유코인)평가 손익")
+            self.lblSTATUS_header = ['', '슬롯', '익절', '보유수량', '총매수금액',
                                      '평가금액', '평균단가', '현재가격', '수익률',
-                                     '평가손익', '매도수익', '실현수익', '총 이윤',
+                                     '평가손익', '매도수익', '총 이윤',
                                      '코인수익']
         else:
             self.m_ask_yn = False
             self.btnManualAsk.setEnabled(False)
             self.txtManualAsk.setEnabled(False)
             self.lblOption.setText('자본\n잠식')
+            self.lblComment.setText("    ※ 매도수익 = 매도 원화 - 매수 원화       ※ 실현수익 = 매도수익 - 자본잠식    ※ 총 이윤 = 실현 수익 + (보유코인)평가 손익")
             self.lblSTATUS_header = ['', '슬롯', '보유수량', '총매수금액',
                                      '평가금액', '평균단가', '현재가격', '수익률',
                                      '평가손익', '매도수익', #'자본잠식',
@@ -188,11 +193,17 @@ class Main(QtWidgets.QMainWindow, main_ui):
         except:
             return
         if self.cvs is not None:
+            self.gLayout.removeWidget(self.toolbar)
             self.gLayout.removeWidget(self.cvs)
-        self.fgr = plt.Figure()
+        self.fgr = Figure()
         self.cvs = FigureCanvas(self.fgr)
+        self.toolbar = NavigationToolbar(self.cvs, self)
+
+
+        self.gLayout.addWidget(self.toolbar)
         self.gLayout.addWidget(self.cvs)
         ax = self.fgr.add_subplot(111)
+        ax.clear()
 
         r_db = self.db.req_db('s_prcs_g', (crcy,crcy))
         r_db_2 = self.db.req_db('s_prc_gb', (crcy, crcy))
@@ -402,7 +413,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
             if cmb==1 or cmb==4:    # 보유 중 + 구매 대기
                 values = ('N', )
             else:
-                values = ('Y', )    # 익절 슬롯
+                qtype='s_slot_y'
+                values = ( )    # 익절 슬롯
 
 
         r_db = self.db.req_db(qtype, values)
@@ -559,7 +571,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         total_coin_ask = 0
         total_coin_profit_krw = 0
         total_slots = 0
-        total_sell_profit = 0
+        total_ask_num = 0
         if r_db is not False:
             self.tblStatus.setRowCount(len(r_db))
             self.tblStatus.setHorizontalHeaderLabels(self.lblSTATUS_header)
@@ -568,19 +580,28 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 minus = 0
                 crcy = e[0]
                 # print("config : "+str(self.coin_config[crcy]))
-
+                ask_num=0
+                r_db_ask_num = self.db.req_db('s_n_ask_status', (crcy,))
+                # print("crcy: "+crcy+", r_db_ask_num : "+str(r_db_ask_num))
+                if r_db_ask_num is not False and len(r_db_ask_num)>0:
+                    ask_num = r_db_ask_num[0][1]
+                total_ask_num += ask_num
                 r = call_api(GET_PRC, crcy)
                 # print(r)
-                self.curr_prc[crcy] = int(r['data']['closing_price'])
+                self.curr_prc[crcy] = int(float(r['data']['closing_price']))
                 curr_prc = self.curr_prc[crcy]
                 row_data = []
                 row_data.append(e[0])        # 코인 (crcy)
                 row_data.append(e[1])        # 총 슬롯 수(num of slots)
+                row_data.append(ask_num)     # 익절 횟수
                 total_slots += e[1]
                 row_data.append(format(round(e[4], 4), ','))        # 전체 수량 (bid amnt)
                 current_bid_krw = int(e[4]*e[5])
-                bid_krw = self.coin_config[crcy]['first_slot_krw'] \
-                          + self.coin_config[crcy]['slot_krw']*(e[1]-1)
+                try:
+                    bid_krw = self.coin_config[crcy]['first_slot_krw'] \
+                            + self.coin_config[crcy]['slot_krw']*(e[1]-1)
+                except:
+                    bid_krw = round(e[3]+5, -1)
                 if e[1]>2:
                     for i in range(2, e[1]):
                         bid_krw += int(self.coin_config[crcy]['add_slot_krw'])*(i-1)
@@ -603,11 +624,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     total_coin_profit_krw +=profit_krw
                     sell_profit = int(e[6])
                     row_data.append(format(sell_profit, ','))        # 매도 수익
-                    total_sell_profit += sell_profit
+                    # total_sell_profit += sell_profit
                     # if self.m_ask_yn is False:
                     #    row_data.append(format(int(round(minus, 0)), ','))       # 자본 잠식
                     benefit_krw = round(e[6]+minus, 0)
-                    row_data.append(format(int(benefit_krw), ',')) # 실현 수익 = 매도 수익 - 자본 잠식
+                    # row_data.append(format(int(benefit_krw), ',')) # 실현 수익 = 매도 수익 - 자본 잠식
                     benefit = benefit_krw+profit_krw
                     row_data.append(format(int(benefit), ','))     # 총 이윤 = 실현 수익  + 평가 손익
                     total_benefit     += benefit
@@ -643,7 +664,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if is_new_ui:
             self.lblCurBenefit.setText(format(total_coin_profit_krw, ',')) # 평가손익
             self.lblNumSlot.setText(str(total_slots))
-            self.lblSellProfit.setText(format(total_sell_profit,','))
+            self.lblTotAskNum.setText(format(total_ask_num,','))
 
         if self.m_ask_yn is True:
             self.lblOptVal.setText(format(int(round(total_coin_ask,0)), ','))    # 코인 수익
@@ -657,12 +678,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         r = call_api(GET_BAL, 'BTC')
         if r['status']=='0000':
-            in_use_krw = r['data']['total_krw'] - r['data']['available_krw']
-            self.lblTotalKrw.setText(format(total_coin_krw+r['data']['total_krw'], ','))
+            in_use_krw = int(r['data']['total_krw']) - int(r['data']['available_krw'])
+            self.lblTotalKrw.setText(format(total_coin_krw+int(r['data']['total_krw']), ','))
             self.lblCoinKrw.setText(format(total_coin_krw, ','))
-            self.lblKrw.setText(format(r['data']['total_krw'], ','))
+            self.lblKrw.setText(format(int(r['data']['total_krw']), ','))
             self.lblInuseKrw.setText(format(in_use_krw, ','))
-            self.lblAvailKrw.setText(format(r['data']['available_krw'],','))
+            self.lblAvailKrw.setText(format(int(r['data']['available_krw']),','))
 
         self.updateExecState()
         cur_time = get_ts(get_date_time())

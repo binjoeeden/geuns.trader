@@ -47,10 +47,28 @@ def get_initParam():
 
 # api_type should be in (GET_PRC, MKT_BID, MKT_ASK, REQ_ORD, CCL_ORD)
 def call_api(api_type, crcy, rgParam={}, t_sleep=retry_delay):
-    LOCK.acquire()
     if api_type<GET_PRC and api_type>MAX_TYPE:
         print("api_type error")
-        return
+        return None
+
+    if api_type==REQ_ORD and rgParam['type']=='bid':
+        r = call_api(GET_BAL, 'BTC')
+        if r['status']=='0000':
+            bid_krw = rgParam['units']*rgParam['price']
+            if r['data']['available_krw']<bid_krw:
+                print("available krw less than bidkrw... cancel bid")
+                return None
+
+    if api_type==MKT_BID:
+        r = call_api(GET_BAL, 'BTC')
+        if r['status']=='0000':
+            available_krw = r['data']['available_krw']
+            r2 = call_api(GET_PRC, crcy)
+            prc = float(r['data']['ask_price'])
+            bid_krw = prc*rgParam['units']
+            if available_krw<bid_krw:
+                print("available krw less than bidkrw... cancel bid")
+                return None
 
     if api_type != HST_ORD:
         rgParam['Payment_currency'] = 'KRW'
@@ -102,7 +120,6 @@ def call_api(api_type, crcy, rgParam={}, t_sleep=retry_delay):
         ret_map['message'] = result['message']
     elif 'msg' in result.keys():
         ret_map['msg'] = result['msg']
-    LOCK.release()
     return ret_map
 
 def chk_order(order_id, crcy, bidask, amnt):
